@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
-    "url": "https://github.com/SeifKhaled1210/TakePeekMW-Updates/releases/download/v1.0.0/TakePeekWD.exe",
-    "changelog": "Initial release"
+    "version": "1.1.0",
+    "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.1.0/TakePeekWD.exe",
+    "changelog": "Updated offsets (Sep 4 patch), visibility check, visible/hidden colors"
 }
