@@ -1,5 +1,5 @@
 {
-  "version": "1.2.4",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.4/TakePeekWD.exe",
-  "changelog": "Remove PE header erasure — incompatible with KeyAuth integrity checks and DX11"
+  "version": "1.2.5",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.5/TakePeekWD.exe",
+  "changelog": "Better module enumeration diagnostics, retry logic for toolhelp snapshots"
 }
