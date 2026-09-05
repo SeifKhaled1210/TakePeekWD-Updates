@@ -1,5 +1,5 @@
-﻿{
-  "version": "1.2.1",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.1/TakePeekWD.exe",
-  "changelog": "Driver device name randomization, production KeyAuth"
+{
+  "version": "1.2.2",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.2/TakePeekWD.exe",
+  "changelog": "Fix GWorld pattern scan false positives, fix ESP/aimbot not finding players"
 }
