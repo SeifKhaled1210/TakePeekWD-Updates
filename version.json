@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.2.0",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.0/TakePeekWD.exe",
-  "changelog": "Production KeyAuth auth, vehicle ESP, visibility system"
+  "version": "1.2.1",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.1/TakePeekWD.exe",
+  "changelog": "Driver device name randomization, production KeyAuth"
 }
