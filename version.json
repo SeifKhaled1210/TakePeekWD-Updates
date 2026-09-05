@@ -1,5 +1,5 @@
 {
-  "version": "1.2.3",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.3/TakePeekWD.exe",
-  "changelog": "Fix auth phase crash — move PE header erasure to after auth window init"
+  "version": "1.2.4",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.4/TakePeekWD.exe",
+  "changelog": "Remove PE header erasure — incompatible with KeyAuth integrity checks and DX11"
 }
