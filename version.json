@@ -1,5 +1,5 @@
 {
-  "version": "1.2.2",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.2/TakePeekWD.exe",
-  "changelog": "Fix GWorld pattern scan false positives, fix ESP/aimbot not finding players"
+  "version": "1.2.3",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.3/TakePeekWD.exe",
+  "changelog": "Fix auth phase crash — move PE header erasure to after auth window init"
 }
