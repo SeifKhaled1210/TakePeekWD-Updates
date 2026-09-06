@@ -1,5 +1,5 @@
 {
-  "version": "1.2.6",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.6/TakePeekWD.exe",
-  "changelog": "Fix goto bug skipping vehicle ESP and hitmarkers, add camera chain diagnostics"
+  "version": "1.2.7",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.7/TakePeekWD.exe",
+  "changelog": "Update ESP offsets (ComponentToWorld, CharacterMesh) from latest game patch"
 }
