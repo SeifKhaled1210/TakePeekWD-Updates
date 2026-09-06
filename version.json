@@ -1,5 +1,5 @@
 {
-  "version": "1.2.8",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.8/TakePeekWD.exe",
-  "changelog": "Update ESP offsets (ComponentToWorld, CharacterMesh) from latest game patch"
+  "version": "1.2.9",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.9/TakePeekWD.exe",
+  "changelog": "New: Faction tags, off-screen arrows, view direction, world item ESP (drops/mines), vehicle land/air filters, max ESP distance slider, health hidden when downed"
 }
