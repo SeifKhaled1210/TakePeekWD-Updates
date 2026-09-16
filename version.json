@@ -1,5 +1,5 @@
 {
-  "version": "1.2.9",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.2.9/TakePeekWD.exe",
-  "changelog": "New: Faction tags, off-screen arrows, view direction, world item ESP (drops/mines), vehicle land/air filters, max ESP distance slider, health hidden when downed"
+  "version": "1.4.0",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.4.0/TakePeekWD.exe",
+  "changelog": "Updated all offsets for Sep 14 patch (globals shifted ~3MB). Fixed 6 SDK-verified offset bugs: health attribute, faction tag, player name, vehicle bools, aiming alpha, projectile labels. Fixed no-recoil pointer chain. Fixed bone/skeleton rendering: UE5 double-buffer support, stale bone validation, safer fallback indices. Added DX11 WARP fallback for GPU memory errors."
 }
