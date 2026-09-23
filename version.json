@@ -1,5 +1,5 @@
 {
-  "version": "1.6.2",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.2/TakePeekWD.exe",
-  "changelog": "Auto-updater now runs BEFORE license auth. Users with expired keys will auto-update to the latest version before needing to enter a new key. License re-activation fix from v1.6.1 included."
+  "version": "1.6.3",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.3/TakePeekWD.exe",
+  "changelog": "Dead player filtering (dead bodies no longer show on ESP), vehicle false positive fix (static trucks no longer detected), improved vis-check (yellow/red indicator), enhanced diagnostics overlay showing faction/pipeline data."
 }
