@@ -1,5 +1,5 @@
 {
-  "version": "1.6.1",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.1/TakePeekWD.exe",
-  "changelog": "Fix license re-activation: ACTIVATE button no longer locked while auto-checking old expired key. New key entry cancels old validation and validates immediately. Auto-check on startup reduced to 1 attempt (no retries) so new key input is responsive."
+  "version": "1.6.2",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.2/TakePeekWD.exe",
+  "changelog": "Auto-updater now runs BEFORE license auth. Users with expired keys will auto-update to the latest version before needing to enter a new key. License re-activation fix from v1.6.1 included."
 }
