@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.4.0/TakePeekWD.exe",
-  "changelog": "Updated all offsets for Sep 14 patch (globals shifted ~3MB). Fixed 6 SDK-verified offset bugs: health attribute, faction tag, player name, vehicle bools, aiming alpha, projectile labels. Fixed no-recoil pointer chain. Fixed bone/skeleton rendering: UE5 double-buffer support, stale bone validation, safer fallback indices. Added DX11 WARP fallback for GPU memory errors."
+  "version": "1.5.0",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.5.0/TakePeekWD.exe",
+  "changelog": "CRITICAL: Fixed enemy ESP not detecting any enemies. Added secondary actor-list scan that finds enemy players excluded from GameState PlayerArray by UE5 net relevancy. Fixed helicopter/air vehicle ESP disappearing (now uses C2W world position). Bumped config version to reset corrupted settings (fixes phantom snaplines)."
 }
