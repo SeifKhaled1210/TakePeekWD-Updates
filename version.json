@@ -1,5 +1,5 @@
 {
-  "version": "1.6.3",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.3/TakePeekWD.exe",
-  "changelog": "Dead player filtering (dead bodies no longer show on ESP), vehicle false positive fix (static trucks no longer detected), improved vis-check (yellow/red indicator), enhanced diagnostics overlay showing faction/pipeline data."
+  "version": "1.6.4",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.4/TakePeekWD.exe",
+  "changelog": "ESP root cause fix: position reading corrected (uses SDK-verified RelativeLocation instead of unverified offset), secondary scan no longer requires PlayerState (detects all enemy pawns), vis-check defaults to visible for close-range players when render time unavailable."
 }
