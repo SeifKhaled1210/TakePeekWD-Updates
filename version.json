@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.5.1/TakePeekWD.exe",
-  "changelog": "ESP render fix: removed isInVehicle filter blocking enemy ESP draw. Added W2S fallback using raw position when bone-based head position fails. Added on-screen ESP debug line showing pipeline stats (bottom-left). Per-enemy diagnostic logging."
+  "version": "1.6.0",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.0/TakePeekWD.exe",
+  "changelog": "ESP render fix: removed isInVehicle filter blocking enemies, added W2S fallback chain for robust positioning. Added secondary actor-list player scan for enemies excluded by UE5 net relevancy. Added World ESP for Emplacements/Mortars and FOBs/Spawn Points (new toggles in World ESP section). On-screen ESP debug line (bottom-left). Per-enemy diagnostic logging."
 }
