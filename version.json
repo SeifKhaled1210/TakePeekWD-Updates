@@ -1,5 +1,5 @@
 {
-  "version": "1.7.4",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.4/TakePeekWD.exe",
-  "changelog": "Fix structure false positives (FOBs/towers/sandbags no longer detected as players). Add Show Empty vehicle toggle. Improved actor classification with whitelist gate."
+  "version": "1.7.5",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.5/TakePeekWD.exe",
+  "changelog": "Fix skeleton ESP (add 0x50 bone stride for UE5 SSE builds). Improve helicopter detection (name-first check, more aircraft keywords). Broaden bodybag/death loot class detection. Structure false positive fix. Show Empty vehicle toggle."
 }
