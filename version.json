@@ -1,5 +1,5 @@
 {
-  "version": "1.6.5",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.5/TakePeekWD.exe",
-  "changelog": "Vehicle ESP fix: destroyed/engine flags were swapped (deobfuscated offsets applied). Removed first-person mesh from skeleton fallback chain (was reading invisible FP body mesh instead of valid 3P mesh)."
+  "version": "1.6.6",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.6/TakePeekWD.exe",
+  "changelog": "Fixed mouse lock when menu is open (now uses WantCaptureMouse for passthrough). Fixed hitbox chaos: removed speculative bone arrays, hardened bone/C2W validation, added world-space distance sanity check. Menu starts closed by default."
 }
