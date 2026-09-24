@@ -1,5 +1,5 @@
 {
-  "version": "1.6.8",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.8/TakePeekWD.exe",
-  "changelog": "Fixed false positive ESP spam: secondary actor scan now requires a valid PlayerState (eliminates props, deployables, NPCs). Expanded non-player class blacklist. Default max distance reduced to 300m."
+  "version": "1.6.9",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.9/TakePeekWD.exe",
+  "changelog": "Full bug sweep: fixed behind-camera ESP ghosts (W2S z-clamp), off-screen arrow direction (90deg off), vehicle occupant count accuracy, world item filter bypass, Insert key double-toggle, WS_EX_TRANSPARENT reliability, config load safety, hitmarker thread safety, process handle leak."
 }
