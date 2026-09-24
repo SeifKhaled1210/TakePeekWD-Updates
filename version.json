@@ -1,5 +1,5 @@
 {
   "version": "1.7.0",
   "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.0/TakePeekWD.exe",
-  "changelog": "Dead players no longer persist on ESP/arrows/radar. Downed players show with yellow indicator + revive timer, reduced clutter (no skeleton/arrows/snaplines). Show Downed toggle added. Config version bumped."
+  "changelog": "Dead players removed from ESP/arrows/radar. Downed players: yellow indicators + revive timer, reduced clutter. Aimbot max distance slider (10-1000m). Item ESP classification: weapons/ammo/attachments/medical/grenades with per-type toggles and color coding. Death loot/bodybag ESP (AWDPlayerInventoryContainer detection). Show Downed toggle. Config v14."
 }
