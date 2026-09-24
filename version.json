@@ -1,5 +1,5 @@
 {
-  "version": "1.6.6",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.6/TakePeekWD.exe",
-  "changelog": "Fixed mouse lock when menu is open (now uses WantCaptureMouse for passthrough). Fixed hitbox chaos: removed speculative bone arrays, hardened bone/C2W validation, added world-space distance sanity check. Menu starts closed by default."
+  "version": "1.6.7",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.7/TakePeekWD.exe",
+  "changelog": "Reverted WantCaptureMouse passthrough (caused deadlock preventing menu clicks). Simple toggle: Insert opens menu and captures input, Insert again closes and passes through. Menu starts closed. Bone validation fixes from v1.6.6 retained."
 }
