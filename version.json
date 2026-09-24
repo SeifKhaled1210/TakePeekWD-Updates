@@ -1,5 +1,5 @@
 {
-  "version": "1.6.9",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.9/TakePeekWD.exe",
-  "changelog": "Full bug sweep: fixed behind-camera ESP ghosts (W2S z-clamp), off-screen arrow direction (90deg off), vehicle occupant count accuracy, world item filter bypass, Insert key double-toggle, WS_EX_TRANSPARENT reliability, config load safety, hitmarker thread safety, process handle leak."
+  "version": "1.7.0",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.0/TakePeekWD.exe",
+  "changelog": "Dead players no longer persist on ESP/arrows/radar. Downed players show with yellow indicator + revive timer, reduced clutter (no skeleton/arrows/snaplines). Show Downed toggle added. Config version bumped."
 }
