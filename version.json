@@ -1,5 +1,5 @@
 {
-  "version": "1.7.3",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.3/TakePeekWD.exe",
-  "changelog": "ESP tracking fix: boxes and skeletons now stick to enemies. Render thread re-reads player positions fresh every frame instead of velocity extrapolation, eliminating overshoot when enemies change direction."
+  "version": "1.7.4",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.4/TakePeekWD.exe",
+  "changelog": "Fix structure false positives (FOBs/towers/sandbags no longer detected as players). Add Show Empty vehicle toggle. Improved actor classification with whitelist gate."
 }
