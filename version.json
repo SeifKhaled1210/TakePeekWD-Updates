@@ -1,5 +1,5 @@
 {
-  "version": "1.7.2",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.2/TakePeekWD.exe",
-  "changelog": "Full code sweep: 20+ bug fixes. Triggerbot/aimbot lock now skip dead players and respect team check. Radar drag uses click-to-start (no accidental drags), resize clamps on-screen, state resets on menu close. DX11 null RTV crash guard. Hitmarker race condition fixed (CAS). Squad globals reset on level transition. Faction snapshot race eliminated. Bodybag icon marker added. Explosive/bodybag class matching tightened. Pointer validation on squad components."
+  "version": "1.7.3",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.3/TakePeekWD.exe",
+  "changelog": "ESP tracking fix: boxes and skeletons now stick to enemies. Render thread re-reads player positions fresh every frame instead of velocity extrapolation, eliminating overshoot when enemies change direction."
 }
