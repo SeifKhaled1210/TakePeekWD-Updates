@@ -1,5 +1,5 @@
 {
-  "version": "1.6.4",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.4/TakePeekWD.exe",
-  "changelog": "ESP root cause fix: position reading corrected (uses SDK-verified RelativeLocation instead of unverified offset), secondary scan no longer requires PlayerState (detects all enemy pawns), vis-check defaults to visible for close-range players when render time unavailable."
+  "version": "1.6.5",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.5/TakePeekWD.exe",
+  "changelog": "Vehicle ESP fix: destroyed/engine flags were swapped (deobfuscated offsets applied). Removed first-person mesh from skeleton fallback chain (was reading invisible FP body mesh instead of valid 3P mesh)."
 }
