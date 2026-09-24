@@ -1,5 +1,5 @@
 {
-  "version": "1.6.7",
-  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.7/TakePeekWD.exe",
-  "changelog": "Reverted WantCaptureMouse passthrough (caused deadlock preventing menu clicks). Simple toggle: Insert opens menu and captures input, Insert again closes and passes through. Menu starts closed. Bone validation fixes from v1.6.6 retained."
+  "version": "1.6.8",
+  "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.6.8/TakePeekWD.exe",
+  "changelog": "Fixed false positive ESP spam: secondary actor scan now requires a valid PlayerState (eliminates props, deployables, NPCs). Expanded non-player class blacklist. Default max distance reduced to 300m."
 }
