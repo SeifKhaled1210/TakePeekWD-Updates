@@ -1,5 +1,5 @@
 {
   "version": "1.7.6",
   "url": "https://github.com/SeifKhaled1210/TakePeekWD-Updates/releases/download/v1.7.6/TakePeekWD.exe",
-  "changelog": "Fix skeleton ESP: swap SkinnedAsset to 0x5A8 (confirmed by friend's SDK), add 0x50 bone stride. Fix helicopter detection. Broaden bodybag class names. Structure false positive fix."
+  "changelog": ""
 }
