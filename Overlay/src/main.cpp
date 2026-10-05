@@ -740,6 +740,7 @@ struct CameraData {
     bool valid;
 };
 static CameraData g_camera{};
+static CameraData s_workerCam{};
 
 static constexpr double PI = 3.14159265358979323846;
 static constexpr double DEG2RAD = PI / 180.0;
@@ -2858,7 +2859,7 @@ static void RunDiagnostics() {
 // Read UE5 game state
 // ============================================================================
 static void UpdateCamera() {
-    g_camera.valid = false;
+    s_workerCam.valid = false;
     g_localPawn = 0;
     if (!g_base) return;
 
@@ -2903,7 +2904,7 @@ static void UpdateCamera() {
     uintptr_t camMgr = Read<uintptr_t>(playerController + O::PC_CameraManager);
     if (!camMgr) { if (!s_camChainLogged) { WriteStartupLog("CamChain", "cameraManager=NULL"); } return; }
 
-    g_camera.timeSeconds = Read<float>(gworld + O::UWorld_TimeSeconds);
+    s_workerCam.timeSeconds = Read<float>(gworld + O::UWorld_TimeSeconds);
 
     // Try 4 camera cache offsets (matching DMA reference order)
     bool camFound = false;
@@ -2914,27 +2915,27 @@ static void UpdateCamera() {
         float fov = Read<float>(povBase + O::POV_FOV);
         if (fov > 1.f && fov < 170.f && (loc.x != 0.0 || loc.y != 0.0 || loc.z != 0.0) &&
             fabs(loc.x) < 1e9 && fabs(loc.y) < 1e9 && fabs(rot.pitch) <= 90.0) {
-            g_camera.location = loc;
-            g_camera.rotation = rot;
-            g_camera.fov = fov;
-            g_camera.aspectRatio = Read<float>(povBase + O::POV_AspectRatio);
-            if (g_camera.aspectRatio <= 0.f) g_camera.aspectRatio = 16.f / 9.f;
-            g_camera.valid = true;
+            s_workerCam.location = loc;
+            s_workerCam.rotation = rot;
+            s_workerCam.fov = fov;
+            s_workerCam.aspectRatio = Read<float>(povBase + O::POV_AspectRatio);
+            if (s_workerCam.aspectRatio <= 0.f) s_workerCam.aspectRatio = 16.f / 9.f;
+            s_workerCam.valid = true;
             camFound = true;
             break;
         }
     }
     if (!camFound) {
-        g_camera.fov = 90.f;
-        g_camera.aspectRatio = 16.f / 9.f;
+        s_workerCam.fov = 90.f;
+        s_workerCam.aspectRatio = 16.f / 9.f;
     }
 
     if (!s_camChainLogged) {
         s_camChainLogged = true;
         char buf[256];
         sprintf_s(buf, "OK cam=(%.0f,%.0f,%.0f) rot=(%.1f,%.1f) fov=%.1f pawn=0x%llX",
-            g_camera.location.x, g_camera.location.y, g_camera.location.z,
-            g_camera.rotation.pitch, g_camera.rotation.yaw, g_camera.fov,
+            s_workerCam.location.x, s_workerCam.location.y, s_workerCam.location.z,
+            s_workerCam.rotation.pitch, s_workerCam.rotation.yaw, s_workerCam.fov,
             (unsigned long long)g_localPawn);
         WriteStartupLog("CamChain", buf);
     }
@@ -3006,7 +3007,7 @@ static void UpdateCamera() {
 
     // FOV changer — write desired FOV to all camera locations (skip when ADS so scope works)
     auto& cfgCam = g_config.Active();
-    if (cfgCam.fovChanger && g_camera.valid && IsValidPtr(camMgr) && !g_localIsADS) {
+    if (cfgCam.fovChanger && s_workerCam.valid && IsValidPtr(camMgr) && !g_localIsADS) {
         float desiredFov = (float)cfgCam.fovValue;
         uintptr_t fovAddr = camMgr + O::CameraManager_CachePrivate + O::CameraCache_POV + O::POV_FOV;
         uintptr_t fovAddrLF = camMgr + O::CameraManager_LastFrameCache + O::CameraCache_POV + O::POV_FOV;
@@ -3014,7 +3015,7 @@ static void UpdateCamera() {
         SafeWrite<float>(fovAddr, desiredFov);
         SafeWrite<float>(fovAddrLF, desiredFov);
         SafeWrite<float>(fovAddrVT, desiredFov);
-        g_camera.fov = desiredFov;
+        s_workerCam.fov = desiredFov;
     }
 }
 
@@ -3147,6 +3148,7 @@ static void UpdatePlayers() {
     static std::unordered_map<uintptr_t, bool> s_persistentDeath;
     static uint32_t s_deadTagId = 0;
     static uint32_t s_dbnoTagId = 0;
+    static uint32_t s_aliveTagId = 0;
     static uint8_t s_prevLocalTeamId = 0xFF;
     static uint32_t s_prevLocalFaction = 0;
     static auto s_lastCacheClear = std::chrono::steady_clock::now();
@@ -3196,6 +3198,7 @@ static void UpdatePlayers() {
         s_persistentDeath.clear();
         s_deadTagId = 0;
         s_dbnoTagId = 0;
+        s_aliveTagId = 0;
         s_prevLocalTeamId = 0xFF;
         s_prevLocalFaction = 0;
         g_localFactionId = 0;
@@ -3276,10 +3279,11 @@ static void UpdatePlayers() {
                 if (vTag) {
                     if (s_deadTagId && vTag == s_deadTagId) p.isDead = true;
                     else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
-                    else if (!s_deadTagId || !s_dbnoTagId) {
+                    else if (vTag != s_aliveTagId) {
                         std::string tagName = ResolveFName((int32_t)vTag);
                         if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; }
-                        else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                        else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                        else s_aliveTagId = vTag;
                     }
                 }
             }
@@ -3452,14 +3456,14 @@ static void UpdatePlayers() {
                 p.isAttached = (attachParent && attachParent > 0x10000000 && attachParent < 0x7FFFFFFFFFFF);
             }
 
-            p.distance = (float)((p.position - g_camera.location).length() / 100.0);
+            p.distance = (float)((p.position - s_workerCam.location).length() / 100.0);
 
             {
                 p.visible = true;
                 p.aimVisible = true;
                 float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                if (g_camera.timeSeconds > 0.f && lrtScreen > 0.f) {
-                    bool rendered = ((double)g_camera.timeSeconds - (double)lrtScreen) <= 0.15;
+                if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                    bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                     p.visible = rendered;
                     p.aimVisible = rendered;
                 }
@@ -3562,10 +3566,11 @@ static void UpdatePlayers() {
                     if (vTag) {
                         if (s_deadTagId && vTag == s_deadTagId) p.isDead = true;
                         else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
-                        else if (!s_deadTagId || !s_dbnoTagId) {
+                        else if (vTag != s_aliveTagId) {
                             std::string tagName = ResolveFName((int32_t)vTag);
                             if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; }
-                            else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                            else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                            else s_aliveTagId = vTag;
                         }
                     }
                 }
@@ -3733,14 +3738,14 @@ static void UpdatePlayers() {
                 BoneIndices bi = skinnedAsset ? ResolveBones(skinnedAsset) : BoneIndices{};
                 if (!bi.valid) bi = FALLBACK_BONES;
 
-                p.distance = (float)((p.position - g_camera.location).length() / 100.0);
+                p.distance = (float)((p.position - s_workerCam.location).length() / 100.0);
 
                 {
                     p.visible = true;
                     p.aimVisible = true;
                     float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                    if (g_camera.timeSeconds > 0.f && lrtScreen > 0.f) {
-                        bool rendered = ((double)g_camera.timeSeconds - (double)lrtScreen) <= 0.15;
+                    if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                         p.visible = rendered;
                         p.aimVisible = rendered;
                     }
@@ -3864,7 +3869,7 @@ static void UpdatePlayers() {
                     p.rootComp = rootComp;
                     p.position = pos;
                     p.isAttached = (attachParent && attachParent > 0x10000000 && attachParent < 0x7FFFFFFFFFFF);
-                    p.distance = (float)((pos - g_camera.location).length() / 100.0);
+                    p.distance = (float)((pos - s_workerCam.location).length() / 100.0);
                     if (p.distance > 800.f) continue;
 
                     p.healthValid = ReadHealth(actor, p.health, p.maxHealth);
@@ -3884,10 +3889,11 @@ static void UpdatePlayers() {
                         if (vTag) {
                             if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath[actor] = true; }
                             else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
-                            else if (!s_deadTagId || !s_dbnoTagId) {
+                            else if (vTag != s_aliveTagId) {
                                 std::string tagName = ResolveFName((int32_t)vTag);
                                 if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath[actor] = true; }
-                                else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                                else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                                else s_aliveTagId = vTag;
                             }
                         }
                     }
@@ -4018,8 +4024,8 @@ static void UpdatePlayers() {
                         p.visible = true;
                         p.aimVisible = true;
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                        if (g_camera.timeSeconds > 0.f && lrtScreen > 0.f) {
-                            bool rendered = ((double)g_camera.timeSeconds - (double)lrtScreen) <= 0.15;
+                        if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                             p.visible = rendered;
                             p.aimVisible = rendered;
                         }
@@ -4114,7 +4120,7 @@ static void UpdatePlayers() {
                         v.position = repLoc;
                 }
                 if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
-                v.distance = (float)((v.position - g_camera.location).length() / 100.0);
+                v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
                 if (v.distance > cfg.vehicleMaxDistance) continue;
 
                 uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
@@ -4300,7 +4306,7 @@ static void UpdatePlayers() {
                             v.position = repLoc;
                     }
                     if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
-                    v.distance = (float)((v.position - g_camera.location).length() / 100.0);
+                    v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
                     if (v.distance > cfg.vehicleMaxDistance) continue;
 
                     uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
@@ -4445,7 +4451,7 @@ static void UpdatePlayers() {
 
                 WorldItemData w{};
                 w.position = Read<DVec3>(rootComp + O::Scene_RelativeLocation);
-                w.distance = (float)((w.position - g_camera.location).length() / 100.0);
+                w.distance = (float)((w.position - s_workerCam.location).length() / 100.0);
                 float maxDist = (itemType >= 2) ? cfg.vehicleMaxDistance : cfg.espMaxDistance;
                 if (w.distance > maxDist) continue;
 
@@ -4532,7 +4538,7 @@ static void UpdatePlayers() {
         sprintf_s(status, "PA(%d) shown=%zu(E:%d T:%d dead=%d) vehs=%zu(T:%d E:%d) cam=%s lPawn=0x%llX lFTag=0x%llX lFObj=0x%llX lFData=0x%llX showTeam=%d",
             paCnt, s_workerPlayers.size(), enemies, teammates, s_lastDeadCount,
             s_workerVehicles.size(), teamVehs, enemyVehs,
-            g_camera.valid ? "OK" : "NO",
+            s_workerCam.valid ? "OK" : "NO",
             (unsigned long long)g_localPawn,
             (unsigned long long)g_localFactionId,
             (unsigned long long)g_localFactionObj,
