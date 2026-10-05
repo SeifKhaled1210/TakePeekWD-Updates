@@ -747,7 +747,15 @@ static constexpr double DEG2RAD = PI / 180.0;
 static void UpdateCameraView() {
     if (!g_base) return;
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
-    if (!gworld) { g_camera.valid = false; return; }
+    if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) {
+        uintptr_t eng = Read<uintptr_t>(g_base + O::GEngine);
+        if (eng && eng > 0x10000000 && eng < 0x7FFFFFFFFFFF) {
+            uintptr_t vp = Read<uintptr_t>(eng + O::GEngine_GameViewport);
+            if (vp && vp > 0x10000000 && vp < 0x7FFFFFFFFFFF)
+                gworld = Read<uintptr_t>(vp + O::GameViewport_World);
+        }
+    }
+    if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) { g_camera.valid = false; return; }
     uintptr_t gameInstance = Read<uintptr_t>(gworld + O::UWorld_OwningGameInstance);
     if (!gameInstance) { g_camera.valid = false; return; }
     uintptr_t localPlayers = Read<uintptr_t>(gameInstance + O::GameInstance_LocalPlayers);
@@ -2851,12 +2859,21 @@ static void RunDiagnostics() {
 // ============================================================================
 static void UpdateCamera() {
     g_camera.valid = false;
+    g_localPawn = 0;
     if (!g_base) return;
 
     static bool s_camChainLogged = false;
 
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
-    if (!gworld) return;
+    if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) {
+        uintptr_t eng = Read<uintptr_t>(g_base + O::GEngine);
+        if (eng && eng > 0x10000000 && eng < 0x7FFFFFFFFFFF) {
+            uintptr_t vp = Read<uintptr_t>(eng + O::GEngine_GameViewport);
+            if (vp && vp > 0x10000000 && vp < 0x7FFFFFFFFFFF)
+                gworld = Read<uintptr_t>(vp + O::GameViewport_World);
+        }
+    }
+    if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) return;
 
     // Try multiple GameInstance sources (matches DMA reference Controller() fallback)
     uintptr_t playerController = 0;
@@ -4611,16 +4628,16 @@ static void ApplyNoSpread() {
 static bool WorkerTick_Safe() {
     __try {
         UpdateCamera();
-        ApplyNoRecoil();
-        ApplyNoSway();
-        ApplyNoSpread();
         UpdatePlayers();
-        return true;
     } __except(EXCEPTION_EXECUTE_HANDLER) {
-        WriteStartupLog("WorkerSEH", "exception caught — continuing");
+        WriteStartupLog("WorkerSEH", "detection exception — continuing");
         Sleep(100);
         return false;
     }
+    __try { ApplyNoRecoil(); } __except(EXCEPTION_EXECUTE_HANDLER) {}
+    __try { ApplyNoSway(); } __except(EXCEPTION_EXECUTE_HANDLER) {}
+    __try { ApplyNoSpread(); } __except(EXCEPTION_EXECUTE_HANDLER) {}
+    return true;
 }
 
 void EntityCache::WorkerThread() {
@@ -4702,7 +4719,8 @@ static void DrawSkeleton(ImDrawList* dl, const PlayerData& p, ImU32 col) {
     DrawBoneLine(dl, p, 17, 21, col); // R_foot->R_toe
 }
 
-// Render-thread copies of faction state (for debug display only)
+// Render-thread copies of state (avoids race with worker thread)
+static uintptr_t s_renderPawn = 0;
 static uintptr_t s_renderFaction = 0;
 static uintptr_t s_renderFactionObj = 0;
 static uintptr_t s_renderFactionData = 0;
@@ -5669,8 +5687,8 @@ static void DrawDebugHUD() {
 
     statusLine("Camera:", g_camera.valid ? "OK" : "NULL", g_camera.valid);
 
-    snprintf(buf, sizeof(buf), "0x%llX", (unsigned long long)g_localPawn);
-    statusLine("LocalPawn:", g_localPawn ? buf : "NULL", g_localPawn != 0);
+    snprintf(buf, sizeof(buf), "0x%llX", (unsigned long long)s_renderPawn);
+    statusLine("LocalPawn:", s_renderPawn ? buf : "NULL", s_renderPawn != 0);
 
     snprintf(buf, sizeof(buf), "E:%d T:%d", enemies, team);
     statusLine("Players:", buf, (enemies + team) > 0);
@@ -7740,7 +7758,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             g_players = snap->players;
             g_vehicles = snap->vehicles;
             g_worldItems = snap->worldItems;
-            g_localPawn = snap->localPawn;
+            s_renderPawn = snap->localPawn;
             s_renderFaction = snap->localFaction;
             s_renderFactionObj = snap->localFactionObj;
             s_renderFactionData = snap->localFactionData;
