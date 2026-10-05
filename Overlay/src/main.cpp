@@ -770,17 +770,22 @@ static void UpdateCameraView() {
 
     g_camera.timeSeconds = Read<float>(gworld + O::UWorld_TimeSeconds);
 
-    // Try live ViewTarget first (CM+0x350+0x10), fall back to cached (CM+0x1E40+0x10)
-    uintptr_t povBase = camMgr + O::CameraManager_ViewTarget + O::CameraCache_POV;
-    DVec3 loc = Read<DVec3>(povBase + O::POV_Location);
-    float fov = Read<float>(povBase + O::POV_FOV);
-
-    bool liveOk = (fov > 1.f && fov < 170.f && (loc.x != 0 || loc.y != 0 || loc.z != 0));
-    if (!liveOk) {
-        povBase = camMgr + O::CameraManager_LastFrameCache + O::CameraCache_POV;
-        loc = Read<DVec3>(povBase + O::POV_Location);
-        fov = Read<float>(povBase + O::POV_FOV);
+    // Match worker thread camera source order: CameraCachePrivate → LastFrameCache → ViewTarget → PendingViewTarget
+    uintptr_t povBase = 0;
+    DVec3 loc{};
+    float fov = 0.f;
+    for (uintptr_t camOff : {(uintptr_t)0x1560, (uintptr_t)0x1E40, (uintptr_t)0x350, (uintptr_t)0xC40}) {
+        uintptr_t pb = camMgr + camOff + O::CameraCache_POV;
+        DVec3 tl = Read<DVec3>(pb + O::POV_Location);
+        float tf = Read<float>(pb + O::POV_FOV);
+        if (tf > 1.f && tf < 170.f && (tl.x != 0 || tl.y != 0 || tl.z != 0)) {
+            povBase = pb;
+            loc = tl;
+            fov = tf;
+            break;
+        }
     }
+    if (!povBase) { g_camera.valid = false; return; }
 
     g_camera.location = loc;
     g_camera.rotation = Read<DRotator>(povBase + O::POV_Rotation);
@@ -7554,6 +7559,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 (std::string("0x") + ([&]{ char b[16]; sprintf_s(b, "%X", imgSize); return std::string(b); })()
                 + (g_gworldOff < imgSize ? " (GWorld in range)" : " *** GWorld OUT OF RANGE ***")).c_str());
         }
+    }
+
+    if (AutoResolveGlobals()) {
+        char msg[256];
+        sprintf_s(msg, "GWorld=0x%llX GNames=0x%llX", (unsigned long long)g_gworldOff, (unsigned long long)g_gnamesOff);
+        WriteStartupLog("AutoResolve updated offsets", msg);
+    } else {
+        char msg[256];
+        sprintf_s(msg, "using defaults GWorld=0x%llX GNames=0x%llX", (unsigned long long)g_gworldOff, (unsigned long long)g_gnamesOff);
+        WriteStartupLog("AutoResolve no changes", msg);
     }
 
     WriteStartupLog("Waiting for game to initialize (window + GWorld)...");
