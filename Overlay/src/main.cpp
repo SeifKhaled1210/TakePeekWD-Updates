@@ -173,11 +173,21 @@ namespace O {
     constexpr uintptr_t CMC_MaxWalkSpeed       = 0x2A8; // float
     constexpr uintptr_t CMC_MaxWalkSpeedCrouched = 0x2AC; // float
 
+    // --- ABHMoverPawn (parent of AWDMoverCharacter, deob confirmed) ---
+    constexpr uintptr_t BHPawn_MoverComponent  = 0x378; // UBHPawnMoverComponent* (Mover plugin, NOT UCharacterMovementComponent)
+
+    // --- UWDCharacterAnimInstance (stance booleans, deob confirmed) ---
+    constexpr uintptr_t AnimInst_SprintOrTacSprint  = 0xC3A; // bool — bSprintOrTacSprint
+    constexpr uintptr_t AnimInst_StanceProne        = 0xC44; // bool — IsActiveStanceProne
+    constexpr uintptr_t AnimInst_StanceCrouch       = 0xC45; // bool — IsActiveStanceCrouch
+    constexpr uintptr_t AnimInst_StanceStand        = 0xC46; // bool — IsActiveStanceStand
+
     // --- AWDMoverCharacter (game-specific, Sep 14 SDK) ---
     constexpr uintptr_t WDChar_CharacterMesh    = 0x390; // UBHSkeletalMeshComponentBudgeted* (in parent ABHMoverPawn)
     constexpr uintptr_t WDChar_MeshFallback1    = 0x578; // Fallback mesh (UC post #631)
     // 0xB98 = FirstPersonBodyMesh, 0xBA0 = adjacent FP data — NOT valid for third-person ESP
     constexpr uintptr_t WDChar_VitalityComponent = 0x738; // WDCharacterVitalityComponent*
+    constexpr uintptr_t WDChar_InventoryComponent = 0x748; // UWDPlayerInventoryComponent*
     constexpr uintptr_t WDChar_VehicleOperator   = 0x758; // UWDVehicleOperatorComponent*
     constexpr uintptr_t WDChar_CameraManagerRef  = 0xB48; // APlayerCameraManager* (direct ref)
 
@@ -903,6 +913,9 @@ struct PlayerData {
     uint8_t ping;
     bool isInVehicle;
     DVec3 velocity;
+    uint8_t stance; // 0=Prone, 1=Crouch, 2=Stand, 3=unknown
+    bool isSprinting;
+    bool isTacSprinting;
 };
 
 struct VehicleData {
@@ -3301,6 +3314,19 @@ static void UpdatePlayers() {
             if (p.isDead) dbgDead++;
             p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
+            p.stance = 2;
+            p.isSprinting = false;
+            p.isTacSprinting = false;
+            if (mesh) {
+                uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
+                if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
+                    if (Read<uint8_t>(animInst + O::AnimInst_StanceProne)) p.stance = 0;
+                    else if (Read<uint8_t>(animInst + O::AnimInst_StanceCrouch)) p.stance = 1;
+                    else p.stance = 2;
+                    p.isSprinting = Read<uint8_t>(animInst + O::AnimInst_SprintOrTacSprint) != 0;
+                }
+            }
+
             // Admin / Developer / Bot detection — always read, never filtered
             p.isDeveloper = Read<uint8_t>(playerState + O::PS_IsDeveloper) != 0;
             p.isAdmin = Read<uint8_t>(playerState + O::PS_IsAdmin) != 0;
@@ -3467,10 +3493,15 @@ static void UpdatePlayers() {
                 p.visible = true;
                 p.aimVisible = true;
                 float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                bool recentlyRendered = (renderBits & 1) != 0;
                 if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
                     bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
-                    p.visible = rendered;
-                    p.aimVisible = rendered;
+                    p.visible = rendered || recentlyRendered;
+                    p.aimVisible = rendered || recentlyRendered;
+                } else {
+                    p.visible = recentlyRendered;
+                    p.aimVisible = recentlyRendered;
                 }
             }
 
@@ -3586,6 +3617,19 @@ static void UpdatePlayers() {
                 }
                 if (p.isDead && !cfg.espShowDead) continue;
                 p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
+
+                p.stance = 2;
+                p.isSprinting = false;
+                p.isTacSprinting = false;
+                if (mesh) {
+                    uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
+                    if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
+                        if (Read<uint8_t>(animInst + O::AnimInst_StanceProne)) p.stance = 0;
+                        else if (Read<uint8_t>(animInst + O::AnimInst_StanceCrouch)) p.stance = 1;
+                        else p.stance = 2;
+                        p.isSprinting = Read<uint8_t>(animInst + O::AnimInst_SprintOrTacSprint) != 0;
+                    }
+                }
 
                 bool factionMatch = false;
                 bool isSquadmate = false;
@@ -3749,10 +3793,15 @@ static void UpdatePlayers() {
                     p.visible = true;
                     p.aimVisible = true;
                     float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                    uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                    bool recentlyRendered = (renderBits & 1) != 0;
                     if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
                         bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
-                        p.visible = rendered;
-                        p.aimVisible = rendered;
+                        p.visible = rendered || recentlyRendered;
+                        p.aimVisible = rendered || recentlyRendered;
+                    } else {
+                        p.visible = recentlyRendered;
+                        p.aimVisible = recentlyRendered;
                     }
                 }
 
@@ -3911,6 +3960,19 @@ static void UpdatePlayers() {
                     if (p.isDead && !cfg.espShowDead) continue;
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
+                    p.stance = 2;
+                    p.isSprinting = false;
+                    p.isTacSprinting = false;
+                    if (mesh) {
+                        uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
+                        if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
+                            if (Read<uint8_t>(animInst + O::AnimInst_StanceProne)) p.stance = 0;
+                            else if (Read<uint8_t>(animInst + O::AnimInst_StanceCrouch)) p.stance = 1;
+                            else p.stance = 2;
+                            p.isSprinting = Read<uint8_t>(animInst + O::AnimInst_SprintOrTacSprint) != 0;
+                        }
+                    }
+
                     if (hasPS) {
                         p.isDeveloper = Read<uint8_t>(playerState + O::PS_IsDeveloper) != 0;
                         p.isAdmin = Read<uint8_t>(playerState + O::PS_IsAdmin) != 0;
@@ -4029,10 +4091,15 @@ static void UpdatePlayers() {
                         p.visible = true;
                         p.aimVisible = true;
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                        uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                        bool recentlyRendered = (renderBits & 1) != 0;
                         if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
                             bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
-                            p.visible = rendered;
-                            p.aimVisible = rendered;
+                            p.visible = rendered || recentlyRendered;
+                            p.aimVisible = rendered || recentlyRendered;
+                        } else {
+                            p.visible = recentlyRendered;
+                            p.aimVisible = recentlyRendered;
                         }
                     }
 
@@ -5009,6 +5076,21 @@ static void DrawESP() {
             float wx = headScr.x - wts.x * 0.5f;
             dl->AddText(ImVec2(wx+1, bottomLabelY+1), ApplyAlpha(IM_COL32(0,0,0,160)), p.weaponName.c_str());
             dl->AddText(ImVec2(wx, bottomLabelY), ApplyAlpha(IM_COL32(200,180,255,220)), p.weaponName.c_str());
+        }
+        if (!p.isDead && !p.isDowned) {
+            const char* stanceStr = nullptr;
+            ImU32 stanceCol = ApplyAlpha(IM_COL32(180,180,180,180));
+            if (p.isSprinting) { stanceStr = "SPRINT"; stanceCol = ApplyAlpha(IM_COL32(255,180,50,220)); }
+            else if (p.isADS) { stanceStr = "ADS"; stanceCol = ApplyAlpha(IM_COL32(255,80,80,220)); }
+            else if (p.stance == 0) { stanceStr = "PRONE"; stanceCol = ApplyAlpha(IM_COL32(100,200,255,220)); }
+            else if (p.stance == 1) { stanceStr = "CROUCH"; stanceCol = ApplyAlpha(IM_COL32(100,255,180,200)); }
+            if (stanceStr) {
+                ImVec2 sts = ImGui::CalcTextSize(stanceStr);
+                float sx = headScr.x - sts.x * 0.5f;
+                dl->AddText(ImVec2(sx+1, bottomLabelY+1), ApplyAlpha(IM_COL32(0,0,0,160)), stanceStr);
+                dl->AddText(ImVec2(sx, bottomLabelY), stanceCol, stanceStr);
+                bottomLabelY += sts.y + 1.f;
+            }
         }
         if (cfg.espHeadDot && !p.isDowned && !p.isDead)
             dl->AddCircleFilled(ImVec2(headScr.x, headScr.y), 3.f, ApplyAlpha(IM_COL32(255,50,50,230)));
