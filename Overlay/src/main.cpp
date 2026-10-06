@@ -1348,7 +1348,9 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
                      className.find("Chinook") != std::string::npos ||
                      className.find("Blackhawk") != std::string::npos ||
                      className.find("Transport") != std::string::npos ||
-                     className.find("Aviation") != std::string::npos;
+                     className.find("Aviation") != std::string::npos ||
+                     className.find("Airplane") != std::string::npos ||
+                     className.find("ROT_") != std::string::npos;
 
     if (nameMatch) {
         g_vehicleClasses.insert(actorClass);
@@ -1408,7 +1410,9 @@ static bool IsVehicleAir(const std::string& name) {
            name.find("Plane") != std::string::npos ||
            name.find("Chinook") != std::string::npos ||
            name.find("Blackhawk") != std::string::npos ||
-           name.find("Aviation") != std::string::npos;
+           name.find("Aviation") != std::string::npos ||
+           name.find("Airplane") != std::string::npos ||
+           name.find("ROT_") != std::string::npos;
 }
 
 static std::string ResolveVehicleName(const std::string& className) {
@@ -1658,6 +1662,10 @@ static uintptr_t PatternScan(uintptr_t start, size_t size,
 }
 
 static bool AutoResolveGlobals() {
+    // SDK offsets are authoritative — skip scanning entirely
+    WriteStartupLog("AutoResolve", "disabled — using SDK offsets");
+    return false;
+
     int32_t peOff = Read<int32_t>(g_base + 0x3C);
     uint32_t imageSize = Read<uint32_t>(g_base + peOff + 0x50);
     if (imageSize == 0 || imageSize > 0x20000000) imageSize = 0x10000000;
@@ -1685,8 +1693,19 @@ static bool AutoResolveGlobals() {
         if (!IsHeapPtr(actors)) return false;
         int32_t actorCnt = Read<int32_t>(level + O::ULevel_Actors + 8);
         if (actorCnt <= 0 || actorCnt > 200000) return false;
+        uintptr_t gs = Read<uintptr_t>(val + O::UWorld_GameState);
+        if (gs != 0 && !IsHeapPtr(gs)) return false;
         return true;
     };
+
+    // Check if the default (SDK) offset already works — skip scan if so
+    {
+        uintptr_t val = Read<uintptr_t>(g_base + g_gworldOff);
+        if (ValidateGWorld(val)) {
+            WriteStartupLog("AutoResolve", "default GWorld offset is valid, skipping scan");
+            return false;
+        }
+    }
 
     // --- GWorld via RIP-relative scan: find ALL mov reg,[rip+disp] that resolve to .data section ---
     // Scan for 48 8B 05/0D/15/1D/25/2D/35/3D XX XX XX XX (mov r64, [rip+disp32])
@@ -2151,7 +2170,8 @@ static DTransform ReadC2W(uintptr_t mesh) {
         DTransform d = Read<DTransform>(mesh + g_c2wOffset);
         return d;
     }
-    for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+    for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200,
+                           (uintptr_t)0x210, (uintptr_t)0x220, (uintptr_t)0x230, (uintptr_t)0x240}) {
         DTransform d = Read<DTransform>(mesh + off);
         if (fabs(d.rotation.w) >= 0.01 && fabs(d.rotation.w) <= 1.01 &&
             (d.translation.x != 0.0 || d.translation.y != 0.0) &&
@@ -2327,24 +2347,62 @@ static DVec3 ApplyTransform(const DTransform& t, DVec3 p) {
     return rotated + t.translation;
 }
 
-// Reference-matched skeleton reader: tries 4 bone array offsets per call,
+// Reference-matched skeleton reader: tries multiple bone array offsets and strides,
 // batch reads, validates C2W proximity and per-bone distance, spine check.
 static bool ReadSkeleton(uintptr_t mesh, const BoneIndices& bi, DVec3 playerPos, DVec3* outBones) {
     if (!mesh) return false;
 
     DTransform c2w{};
     bool c2wOk = false;
-    for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
-        DTransform t = Read<DTransform>(mesh + off);
-        if (!t.Valid()) continue;
-        double dx = t.translation.x - playerPos.x, dy = t.translation.y - playerPos.y, dz = t.translation.z - playerPos.z;
-        if (sqrt(dx*dx + dy*dy + dz*dz) > 500.0) continue;
-        c2w = t; c2wOk = true; break;
+
+    if (g_c2wOffset) {
+        c2w = Read<DTransform>(mesh + g_c2wOffset);
+        if (c2w.Valid()) {
+            double dx = c2w.translation.x - playerPos.x, dy = c2w.translation.y - playerPos.y, dz = c2w.translation.z - playerPos.z;
+            c2wOk = (sqrt(dx*dx + dy*dy + dz*dz) <= 500.0);
+        }
+    }
+    if (!c2wOk) {
+        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200,
+                               (uintptr_t)0x210, (uintptr_t)0x220, (uintptr_t)0x230, (uintptr_t)0x240}) {
+            DTransform t = Read<DTransform>(mesh + off);
+            if (!t.Valid()) continue;
+            double dx = t.translation.x - playerPos.x, dy = t.translation.y - playerPos.y, dz = t.translation.z - playerPos.z;
+            if (sqrt(dx*dx + dy*dy + dz*dz) > 500.0) continue;
+            c2w = t; c2wOk = true;
+            if (!g_c2wOffset) {
+                g_c2wOffset = off;
+                char buf[128];
+                sprintf_s(buf, "ReadSkeleton discovered C2W at mesh+0x%llX", (unsigned long long)off);
+                WriteStartupLog("C2W", buf);
+            }
+            break;
+        }
+    }
+    if (!c2wOk) {
+        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200}) {
+            FTransformF tf = Read<FTransformF>(mesh + off);
+            if (fabsf(tf.rotW) < 0.01f || fabsf(tf.rotW) > 1.01f) continue;
+            DVec3 tl = {(double)tf.tX, (double)tf.tY, (double)tf.tZ};
+            if (tl.x == 0.0 && tl.y == 0.0) continue;
+            double dx = tl.x - playerPos.x, dy = tl.y - playerPos.y, dz = tl.z - playerPos.z;
+            if (sqrt(dx*dx + dy*dy + dz*dz) > 500.0) continue;
+            c2w.rotation = {(double)tf.rotX, (double)tf.rotY, (double)tf.rotZ, (double)tf.rotW};
+            c2w.translation = tl;
+            c2w._pad0 = 0;
+            c2w.scale3D = {(double)tf.sX, (double)tf.sY, (double)tf.sZ};
+            c2w._pad1 = 0;
+            c2wOk = true;
+            break;
+        }
     }
     if (!c2wOk) return false;
 
+    int stride = g_boneStride ? g_boneStride : 0;
+
     for (uintptr_t boneOff : {(uintptr_t)O::Skinned_BoneTransformsAlt1, (uintptr_t)O::Skinned_ComponentSpaceTransforms1,
-                               (uintptr_t)O::Skinned_ComponentSpaceTransforms, (uintptr_t)O::Skinned_BoneTransformsAlt0}) {
+                               (uintptr_t)O::Skinned_ComponentSpaceTransforms, (uintptr_t)O::Skinned_BoneTransformsAlt0,
+                               (uintptr_t)0x640, (uintptr_t)0x650, (uintptr_t)0x660}) {
         bool isLocal = (boneOff == O::Skinned_BoneTransformsAlt0);
         if (isLocal && bi.parentChain.empty()) continue;
 
@@ -2355,38 +2413,87 @@ static bool ReadSkeleton(uintptr_t mesh, const BoneIndices& bi, DVec3 playerPos,
         if (arrCount < 10 || arrCount > 1024 || arrCap < arrCount) continue;
         if (!bi.valid && arrCount < 149) continue;
 
-        std::vector<DTransform> transforms(arrCount);
-        ReadRaw(arrData, transforms.data(), arrCount * sizeof(DTransform));
+        static const int stridesToTry[] = {0x60, 0x30, 0x50};
+        for (int tryStride : stridesToTry) {
+            if (stride && tryStride != stride && g_discoveredBoneOffset) continue;
 
-        DVec3 bones[22]{};
-        bool boneOk[22]{};
+            DVec3 bones[22]{};
+            bool boneOk[22]{};
 
-        for (int slot = 0; slot < 22; slot++) {
-            int idx = bi.ToSlot(slot);
-            if (idx < 0 || idx >= arrCount || !transforms[idx].Valid()) continue;
+            if (tryStride == 0x60) {
+                std::vector<DTransform> transforms(arrCount);
+                ReadRaw(arrData, transforms.data(), arrCount * sizeof(DTransform));
 
-            DVec3 point = transforms[idx].translation;
-            bool ok = true;
-            if (isLocal) {
-                for (int parent = bi.parentChain[idx]; parent >= 0 && parent < arrCount; parent = bi.parentChain[parent]) {
-                    if (!transforms[parent].Valid()) { ok = false; break; }
-                    point = ApplyTransform(transforms[parent], point);
+                for (int slot = 0; slot < 22; slot++) {
+                    int idx = bi.ToSlot(slot);
+                    if (idx < 0 || idx >= arrCount || !transforms[idx].Valid()) continue;
+                    DVec3 point = transforms[idx].translation;
+                    bool ok = true;
+                    if (isLocal) {
+                        for (int parent = bi.parentChain[idx]; parent >= 0 && parent < arrCount; parent = bi.parentChain[parent]) {
+                            if (!transforms[parent].Valid()) { ok = false; break; }
+                            point = ApplyTransform(transforms[parent], point);
+                        }
+                    }
+                    point = ApplyTransform(c2w, point);
+                    if (!ok || !std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) continue;
+                    double bdx = point.x - playerPos.x, bdy = point.y - playerPos.y, bdz = point.z - playerPos.z;
+                    if (sqrt(bdx*bdx + bdy*bdy + bdz*bdz) > 400.0) continue;
+                    bones[slot] = point;
+                    boneOk[slot] = true;
+                }
+            } else if (tryStride == 0x30) {
+                int readSize = arrCount * (int)sizeof(FTransformF);
+                std::vector<FTransformF> fBones(arrCount);
+                ReadRaw(arrData, fBones.data(), readSize);
+
+                for (int slot = 0; slot < 22; slot++) {
+                    int idx = bi.ToSlot(slot);
+                    if (idx < 0 || idx >= arrCount) continue;
+                    FTransformF& fb = fBones[idx];
+                    if (fabsf(fb.rotW) < 0.01f || fabsf(fb.rotW) > 1.01f) continue;
+                    DVec3 point = {(double)fb.tX, (double)fb.tY, (double)fb.tZ};
+                    point = ApplyTransform(c2w, point);
+                    if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) continue;
+                    double bdx = point.x - playerPos.x, bdy = point.y - playerPos.y, bdz = point.z - playerPos.z;
+                    if (sqrt(bdx*bdx + bdy*bdy + bdz*bdz) > 400.0) continue;
+                    bones[slot] = point;
+                    boneOk[slot] = true;
+                }
+            } else {
+                std::vector<DTransformPacked> pBones(arrCount);
+                ReadRaw(arrData, pBones.data(), arrCount * (int)sizeof(DTransformPacked));
+
+                for (int slot = 0; slot < 22; slot++) {
+                    int idx = bi.ToSlot(slot);
+                    if (idx < 0 || idx >= arrCount) continue;
+                    DTransformPacked& pb = pBones[idx];
+                    if (fabs(pb.rotation.w) < 0.01 || fabs(pb.rotation.w) > 1.01) continue;
+                    DVec3 point = pb.translation;
+                    point = ApplyTransform(c2w, point);
+                    if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) continue;
+                    double bdx = point.x - playerPos.x, bdy = point.y - playerPos.y, bdz = point.z - playerPos.z;
+                    if (sqrt(bdx*bdx + bdy*bdy + bdz*bdz) > 400.0) continue;
+                    bones[slot] = point;
+                    boneOk[slot] = true;
                 }
             }
-            point = ApplyTransform(c2w, point);
-            if (!ok || !std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) continue;
-            double bdx = point.x - playerPos.x, bdy = point.y - playerPos.y, bdz = point.z - playerPos.z;
-            if (sqrt(bdx*bdx + bdy*bdy + bdz*bdz) > 400.0) continue;
-            bones[slot] = point;
-            boneOk[slot] = true;
-        }
 
-        if (boneOk[0] && boneOk[1] && boneOk[2] && boneOk[5]) {
-            double sdx = bones[0].x - bones[5].x, sdy = bones[0].y - bones[5].y, sdz = bones[0].z - bones[5].z;
-            double spine = sqrt(sdx*sdx + sdy*sdy + sdz*sdz);
-            if (spine >= 15.0 && spine <= 200.0) {
-                memcpy(outBones, bones, 22 * sizeof(DVec3));
-                return true;
+            if (boneOk[0] && boneOk[1] && boneOk[2] && boneOk[5]) {
+                double sdx = bones[0].x - bones[5].x, sdy = bones[0].y - bones[5].y, sdz = bones[0].z - bones[5].z;
+                double spine = sqrt(sdx*sdx + sdy*sdy + sdz*sdz);
+                if (spine >= 15.0 && spine <= 200.0) {
+                    memcpy(outBones, bones, 22 * sizeof(DVec3));
+                    if (!g_discoveredBoneOffset) {
+                        g_discoveredBoneOffset = boneOff;
+                        g_boneStride = tryStride;
+                        char buf[256];
+                        sprintf_s(buf, "ReadSkeleton discovered bones at mesh+0x%llX stride=0x%X count=%d",
+                            (unsigned long long)boneOff, tryStride, arrCount);
+                        WriteStartupLog("BoneScan", buf);
+                    }
+                    return true;
+                }
             }
         }
     }
@@ -2918,6 +3025,8 @@ static void UpdateCamera() {
         g_localPawn = Read<uintptr_t>(playerController + 0x2F8);
     if (!g_localPawn || g_localPawn < 0x10000000 || g_localPawn >= 0x7FFFFFFFFFFF)
         g_localPawn = Read<uintptr_t>(playerController + 0x308);
+    if (!g_localPawn || g_localPawn < 0x10000000 || g_localPawn >= 0x7FFFFFFFFFFF)
+        g_localPawn = 0;
 
     uintptr_t camMgr = Read<uintptr_t>(playerController + O::PC_CameraManager);
     if (!camMgr) { if (!s_camChainLogged) { WriteStartupLog("CamChain", "cameraManager=NULL"); } return; }
@@ -3285,15 +3394,19 @@ static void UpdatePlayers() {
             p.mesh = mesh;
 
             p.healthValid = ReadHealth(actor, p.health, p.maxHealth);
-            if (!p.healthValid) { p.health = 100.f; p.maxHealth = 100.f; }
+            if (!p.healthValid) { p.health = 0.f; p.maxHealth = 100.f; }
 
             p.isInvincible = Read<uint8_t>(actor + O::WDChar_Invincible) != 0;
             p.bleedoutState = Read<uint8_t>(actor + O::WDChar_DeathState + O::DeathState_BleedoutState);
             p.giveUpTime = Read<float>(actor + O::WDChar_DeathState + O::DeathState_GiveUpTime);
-            p.isDead = (p.bleedoutState >= 2) || (p.health <= 0.f);
-            p.isDowned = !p.isDead && (p.bleedoutState == 1);
+            p.isDead = (p.bleedoutState >= 2) || (p.healthValid && p.health <= 0.f);
+            p.isDowned = !p.isDead && (p.bleedoutState >= 1);
             if (!p.isDead && !p.isDowned) {
                 uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                if (!vTag) {
+                    uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
+                    if (inlineTag) vTag = inlineTag;
+                }
                 if (vTag) {
                     if (s_deadTagId && vTag == s_deadTagId) p.isDead = true;
                     else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
@@ -3305,9 +3418,10 @@ static void UpdatePlayers() {
                     }
                 }
             }
+            if (!p.isDead && !p.healthValid) p.isDead = true;
             if (p.isDead) s_persistentDeath[actor] = true;
             else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                if (p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                 else p.isDead = true;
             }
             if (p.isDead && !cfg.espShowDead) { dbgDead++; continue; }
@@ -3472,14 +3586,26 @@ static void UpdatePlayers() {
             p.isAttached = false;
             if (rootComp) {
                 bool gotPos = false;
-                for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
-                    DTransform t = Read<DTransform>(rootComp + off);
+                if (g_c2wOffset) {
+                    DTransform t = Read<DTransform>(rootComp + g_c2wOffset);
                     if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                         (t.translation.x != 0.0 || t.translation.y != 0.0) &&
                         fabs(t.translation.x) < 1e9 && fabs(t.translation.y) < 1e9) {
                         p.position = t.translation;
                         gotPos = true;
-                        break;
+                    }
+                }
+                if (!gotPos) {
+                    for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
+                        DTransform t = Read<DTransform>(rootComp + off);
+                        if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
+                            (t.translation.x != 0.0 || t.translation.y != 0.0) &&
+                            fabs(t.translation.x) < 1e9 && fabs(t.translation.y) < 1e9) {
+                            p.position = t.translation;
+                            gotPos = true;
+                            if (!g_c2wOffset) g_c2wOffset = off;
+                            break;
+                        }
                     }
                 }
                 if (!gotPos) p.position = Read<DVec3>(rootComp + O::Scene_RelativeLocation);
@@ -3494,8 +3620,8 @@ static void UpdatePlayers() {
                 p.aimVisible = true;
                 float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                 uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                bool recentlyRendered = (renderBits & 1) != 0;
-                if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                bool recentlyRendered = (renderBits & 0x80) != 0;
+                if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
                     bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                     p.visible = rendered || recentlyRendered;
                     p.aimVisible = rendered || recentlyRendered;
@@ -3510,7 +3636,7 @@ static void UpdatePlayers() {
             p.boneCount = 22;
             if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
                 p.headPos = p.position;
-                p.headPos.z += 160.0;
+                p.headPos.z += 80.0;
                 for (int b = 0; b < 22; b++) p.bones[b] = {};
                 p.bones[0] = p.headPos;
             } else {
@@ -3590,15 +3716,19 @@ static void UpdatePlayers() {
                 p.mesh = mesh;
 
                 p.healthValid = ReadHealth(actor, p.health, p.maxHealth);
-                if (!p.healthValid) { p.health = 100.f; p.maxHealth = 100.f; }
+                if (!p.healthValid) { p.health = 0.f; p.maxHealth = 100.f; }
 
                 p.isInvincible = Read<uint8_t>(actor + O::WDChar_Invincible) != 0;
                 p.bleedoutState = Read<uint8_t>(actor + O::WDChar_DeathState + O::DeathState_BleedoutState);
                 p.giveUpTime = Read<float>(actor + O::WDChar_DeathState + O::DeathState_GiveUpTime);
-                p.isDead = (p.bleedoutState >= 2) || (p.health <= 0.f);
-                p.isDowned = !p.isDead && (p.bleedoutState == 1);
+                p.isDead = (p.bleedoutState >= 2) || (p.healthValid && p.health <= 0.f);
+                p.isDowned = !p.isDead && (p.bleedoutState >= 1);
                 if (!p.isDead && !p.isDowned && hasPS) {
                     uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                    if (!vTag) {
+                        uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
+                        if (inlineTag) vTag = inlineTag;
+                    }
                     if (vTag) {
                         if (s_deadTagId && vTag == s_deadTagId) p.isDead = true;
                         else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
@@ -3610,9 +3740,10 @@ static void UpdatePlayers() {
                         }
                     }
                 }
+                if (!p.isDead && !p.healthValid) p.isDead = true;
                 if (p.isDead) s_persistentDeath[actor] = true;
                 else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                    if (p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                    if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                     else p.isDead = true;
                 }
                 if (p.isDead && !cfg.espShowDead) continue;
@@ -3756,7 +3887,7 @@ static void UpdatePlayers() {
                 p.isAttached = false;
                 if (rootComp) {
                     bool gotPos = false;
-                    for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+                    for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
                         DTransform t = Read<DTransform>(rootComp + off);
                         if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                             (t.translation.x != 0.0 || t.translation.y != 0.0) &&
@@ -3794,8 +3925,8 @@ static void UpdatePlayers() {
                     p.aimVisible = true;
                     float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                     uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                    bool recentlyRendered = (renderBits & 1) != 0;
-                    if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                    bool recentlyRendered = (renderBits & 0x80) != 0;
+                    if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
                         bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                         p.visible = rendered || recentlyRendered;
                         p.aimVisible = rendered || recentlyRendered;
@@ -3889,7 +4020,7 @@ static void UpdatePlayers() {
                     DVec3 pos{};
                     if (validRC) {
                         bool gotPos = false;
-                        for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+                        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
                             DTransform t = Read<DTransform>(rootComp + off);
                             if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                                 (t.translation.x != 0.0 || t.translation.y != 0.0) &&
@@ -3927,19 +4058,23 @@ static void UpdatePlayers() {
                     if (p.distance > 800.f) continue;
 
                     p.healthValid = ReadHealth(actor, p.health, p.maxHealth);
-                    if (!p.healthValid) { p.health = 100.f; p.maxHealth = 100.f; }
+                    if (!p.healthValid) { p.health = 0.f; p.maxHealth = 100.f; }
 
                     p.isInvincible = Read<uint8_t>(actor + O::WDChar_Invincible) != 0;
                     p.bleedoutState = Read<uint8_t>(actor + O::WDChar_DeathState + O::DeathState_BleedoutState);
                     p.giveUpTime = Read<float>(actor + O::WDChar_DeathState + O::DeathState_GiveUpTime);
-                    p.isDead = (p.bleedoutState >= 2) || (p.health <= 0.f);
-                    p.isDowned = !p.isDead && (p.bleedoutState == 1);
+                    p.isDead = (p.bleedoutState >= 2) || (p.healthValid && p.health <= 0.f);
+                    p.isDowned = !p.isDead && (p.bleedoutState >= 1);
 
                     uintptr_t playerState = Read<uintptr_t>(actor + O::APawn_PlayerState);
                     bool hasPS = (playerState && playerState > 0x10000000 && playerState < 0x7FFFFFFFFFFF);
 
                     if (!p.isDead && !p.isDowned && hasPS) {
                         uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                        if (!vTag) {
+                            uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
+                            if (inlineTag) vTag = inlineTag;
+                        }
                         if (vTag) {
                             if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath[actor] = true; }
                             else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
@@ -3952,9 +4087,10 @@ static void UpdatePlayers() {
                         }
                     }
 
+                    if (!p.isDead && !p.healthValid) p.isDead = true;
                     if (p.isDead) s_persistentDeath[actor] = true;
                     else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                        if (p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                        if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                         else p.isDead = true;
                     }
                     if (p.isDead && !cfg.espShowDead) continue;
@@ -4092,8 +4228,8 @@ static void UpdatePlayers() {
                         p.aimVisible = true;
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                         uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                        bool recentlyRendered = (renderBits & 1) != 0;
-                        if (s_workerCam.timeSeconds > 0.f && lrtScreen > 0.f) {
+                        bool recentlyRendered = (renderBits & 0x80) != 0;
+                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
                             bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
                             p.visible = rendered || recentlyRendered;
                             p.aimVisible = rendered || recentlyRendered;
@@ -4143,6 +4279,313 @@ static void UpdatePlayers() {
         }
     }
 
+    // UWORLD::LEVELS: scan World Partition sub-levels for player pawns
+    {
+        uintptr_t lvlOff = g_levelsOffset ? g_levelsOffset : O::UWorld_Levels;
+        uintptr_t lvlData = Read<uintptr_t>(gworld + lvlOff);
+        int32_t lvlCount = Read<int32_t>(gworld + lvlOff + 8);
+        if (lvlData && lvlData > 0x10000000 && lvlData < 0x7FFFFFFFFFFF && lvlCount > 0 && lvlCount <= 500) {
+            std::unordered_set<uintptr_t> knownPawns3;
+            knownPawns3.insert(g_localPawn);
+            for (auto& pp : s_workerPlayers)
+                if (pp.isValid) knownPawns3.insert(pp.pawn);
+
+            auto meshValid = [](uintptr_t m, uintptr_t base) {
+                return m && m >= 0x10000000 && m < 0x7FFFFFFFFFFF && !(m >= base && m < base + 0x10000000);
+            };
+            int wpFound = 0;
+
+            for (int li = 0; li < lvlCount; li++) {
+                uintptr_t level = Read<uintptr_t>(lvlData + li * 8);
+                if (!level || level < 0x10000000 || level >= 0x7FFFFFFFFFFF) continue;
+                if (level == persistLevel) continue;
+
+                uintptr_t wpActors = Read<uintptr_t>(level + O::ULevel_Actors);
+                int32_t wpActCount = Read<int32_t>(level + O::ULevel_Actors + 8);
+                if (!wpActors || wpActCount <= 0 || wpActCount >= 50000) continue;
+
+                for (int ai = 0; ai < wpActCount; ai++) {
+                    uintptr_t actor = Read<uintptr_t>(wpActors + ai * 8);
+                    if (!actor || actor < 0x10000000 || actor >= 0x7FFFFFFFFFFF) continue;
+                    if (knownPawns3.count(actor)) continue;
+
+                    uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
+                    if (!meshValid(mesh, g_base)) {
+                        mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
+                        if (!meshValid(mesh, g_base)) continue;
+                    }
+
+                    if (IsActorDummy(actor)) continue;
+                    std::string wpVehName;
+                    if (IsVehicleActor(actor, wpVehName)) continue;
+                    std::string wpWiName;
+                    if (IsWorldItemActor(actor, wpWiName) >= 0) continue;
+
+                    uintptr_t rootComp = Read<uintptr_t>(actor + O::AActor_RootComponent);
+                    bool validRC = rootComp && rootComp >= 0x10000000 && rootComp < 0x7FFFFFFFFFFF;
+
+                    DVec3 pos{};
+                    if (validRC) {
+                        bool gotPos = false;
+                        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
+                            DTransform t = Read<DTransform>(rootComp + off);
+                            if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
+                                (t.translation.x != 0.0 || t.translation.y != 0.0) &&
+                                fabs(t.translation.x) < 1e9 && fabs(t.translation.y) < 1e9) {
+                                pos = t.translation;
+                                gotPos = true;
+                                break;
+                            }
+                        }
+                        if (!gotPos) {
+                            pos.x = Read<double>(rootComp + O::Scene_RelativeLocation);
+                            pos.y = Read<double>(rootComp + O::Scene_RelativeLocation + 8);
+                            pos.z = Read<double>(rootComp + O::Scene_RelativeLocation + 16);
+                        }
+                    }
+                    if (pos.x == 0.0 && pos.y == 0.0 && pos.z == 0.0) {
+                        DVec3 repLoc;
+                        repLoc.x = Read<double>(actor + O::AActor_ReplicatedMovement);
+                        repLoc.y = Read<double>(actor + O::AActor_ReplicatedMovement + 8);
+                        repLoc.z = Read<double>(actor + O::AActor_ReplicatedMovement + 16);
+                        if (fabs(repLoc.x) > 1.0 || fabs(repLoc.y) > 1.0)
+                            pos = repLoc;
+                    }
+                    if (pos.x == 0.0 && pos.y == 0.0 && pos.z == 0.0) continue;
+
+                    uintptr_t attachParent = validRC ? Read<uintptr_t>(rootComp + O::Scene_AttachParent) : 0;
+
+                    PlayerData p{};
+                    p.pawn = actor;
+                    p.mesh = mesh;
+                    p.rootComp = rootComp;
+                    p.position = pos;
+                    p.isAttached = (attachParent && attachParent > 0x10000000 && attachParent < 0x7FFFFFFFFFFF);
+                    p.distance = (float)((pos - s_workerCam.location).length() / 100.0);
+                    if (p.distance > 800.f) continue;
+
+                    p.healthValid = ReadHealth(actor, p.health, p.maxHealth);
+                    if (!p.healthValid) { p.health = 0.f; p.maxHealth = 100.f; }
+
+                    p.isInvincible = Read<uint8_t>(actor + O::WDChar_Invincible) != 0;
+                    p.bleedoutState = Read<uint8_t>(actor + O::WDChar_DeathState + O::DeathState_BleedoutState);
+                    p.giveUpTime = Read<float>(actor + O::WDChar_DeathState + O::DeathState_GiveUpTime);
+                    p.isDead = (p.bleedoutState >= 2) || (p.healthValid && p.health <= 0.f);
+                    p.isDowned = !p.isDead && (p.bleedoutState >= 1);
+
+                    uintptr_t playerState = Read<uintptr_t>(actor + O::APawn_PlayerState);
+                    bool hasPS = (playerState && playerState > 0x10000000 && playerState < 0x7FFFFFFFFFFF);
+
+                    if (!p.isDead && !p.isDowned && hasPS) {
+                        uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                        if (!vTag) {
+                            uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
+                            if (inlineTag) vTag = inlineTag;
+                        }
+                        if (vTag) {
+                            if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath[actor] = true; }
+                            else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
+                            else if (vTag != s_aliveTagId) {
+                                std::string tagName = ResolveFName((int32_t)vTag);
+                                if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath[actor] = true; }
+                                else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
+                                else s_aliveTagId = vTag;
+                            }
+                        }
+                    }
+
+                    if (!p.isDead && !p.healthValid) p.isDead = true;
+                    if (p.isDead) s_persistentDeath[actor] = true;
+                    else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
+                        if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                        else p.isDead = true;
+                    }
+                    if (p.isDead && !cfg.espShowDead) continue;
+                    p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
+
+                    p.stance = 2;
+                    p.isSprinting = false;
+                    p.isTacSprinting = false;
+                    if (mesh) {
+                        uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
+                        if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
+                            if (Read<uint8_t>(animInst + O::AnimInst_StanceProne)) p.stance = 0;
+                            else if (Read<uint8_t>(animInst + O::AnimInst_StanceCrouch)) p.stance = 1;
+                            else p.stance = 2;
+                            p.isSprinting = Read<uint8_t>(animInst + O::AnimInst_SprintOrTacSprint) != 0;
+                        }
+                    }
+
+                    if (hasPS) {
+                        p.isDeveloper = Read<uint8_t>(playerState + O::PS_IsDeveloper) != 0;
+                        p.isAdmin = Read<uint8_t>(playerState + O::PS_IsAdmin) != 0;
+                        p.isBot = (Read<uint8_t>(playerState + O::PS_bIsABot) & 0x08) != 0;
+                        p.ping = Read<uint8_t>(playerState + O::PS_CompressedPing);
+
+                        bool factionMatch = false;
+                        uintptr_t factionComp = Read<uintptr_t>(playerState + O::PS_FactionComponent);
+                        uintptr_t playerFactionData = 0;
+                        int playerTeamWP = -1;
+                        bool validFC = factionComp && factionComp > 0x10000000 && factionComp < 0x7F0000000000;
+                        if (validFC) {
+                            uintptr_t playerFactionObj = Read<uintptr_t>(factionComp + O::Faction_Object);
+                            if (playerFactionObj && playerFactionObj > 0x10000000 && playerFactionObj < 0x7F0000000000) {
+                                playerFactionData = Read<uintptr_t>(playerFactionObj + O::Faction_Data);
+                                if (playerFactionData && (playerFactionData < 0x10000000 || playerFactionData > 0x7F0000000000))
+                                    playerFactionData = 0;
+                            }
+                            if (playerFactionData) {
+                                uint8_t tid = Read<uint8_t>(playerFactionData + O::FactionData_TeamId);
+                                if (tid <= 32) playerTeamWP = tid;
+                                uint32_t dataTag = Read<uint32_t>(playerFactionData + O::FactionData_Tag);
+                                if (dataTag) p.factionId = dataTag;
+                            }
+                            if (!p.factionId) {
+                                uint32_t compTag = Read<uint32_t>(factionComp + O::Faction_TagRep);
+                                if (compTag) p.factionId = compTag;
+                            }
+                            if (!p.factionId) {
+                                uint32_t altTag = Read<uint32_t>(factionComp + O::Faction_Tag);
+                                if (altTag) p.factionId = altTag;
+                            }
+                        }
+
+                        int relation = 0;
+                        uintptr_t squadCompWP = Read<uintptr_t>(playerState + O::PS_SquadComponent);
+                        if (squadCompWP && squadCompWP > 0x10000000 && squadCompWP < 0x7FFFFFFFFFFF && g_localSquadded) {
+                            uint64_t sqLo = Read<uint64_t>(squadCompWP + O::Squad_Id);
+                            uint64_t sqHi = Read<uint64_t>(squadCompWP + O::Squad_Id + 8);
+                            if ((sqLo | sqHi) != 0 && sqLo == g_localSquadLo && sqHi == g_localSquadHi)
+                                relation = 1;
+                        }
+                        if (relation == 0 && g_localFactionData && playerFactionData)
+                            relation = (playerFactionData == g_localFactionData) ? 1 : -1;
+                        if (relation == 0 && g_localFactionId && p.factionId)
+                            relation = (g_localFactionId == p.factionId) ? 1 : -1;
+                        if (relation == 0 && !g_localFactionName.empty() && p.factionId) {
+                            std::string pFN = ResolveFactionName(p.factionId);
+                            if (!pFN.empty())
+                                relation = (g_localFactionName == pFN) ? 1 : -1;
+                        }
+                        if (relation == 0 && g_localTeamId != 0xFF && playerTeamWP >= 0)
+                            relation = (g_localTeamId == (uint8_t)playerTeamWP) ? 1 : -1;
+
+                        factionMatch = (relation == 1);
+                        if (relation != 0) {
+                            s_factionCache[actor] = factionMatch;
+                        }
+
+                        p.isTeammate = factionMatch;
+                        p.name = ReadFString(playerState + O::PS_PlayerNamePrivate);
+                        p.clanTag = ReadFString(playerState + O::PS_PlayerClanTag);
+                        p.factionName = ResolveFactionName(p.factionId);
+                        if (p.factionName.empty() && playerFactionData) {
+                            uint32_t dataTag = Read<uint32_t>(playerFactionData + O::FactionData_Tag);
+                            if (dataTag) {
+                                p.factionId = dataTag;
+                                p.factionName = ResolveFactionName(dataTag);
+                            }
+                        }
+                    }
+
+                    uintptr_t invComp = Read<uintptr_t>(actor + O::WDChar_InventoryComp);
+                    if (invComp) {
+                        uintptr_t heldItem = Read<uintptr_t>(invComp + O::InvComp_HeldItem);
+                        if (!heldItem || heldItem < 0x10000000 || heldItem >= 0x7FFFFFFFFFFF)
+                            heldItem = Read<uintptr_t>(invComp + O::InvComp_ActiveItem);
+                        if (heldItem && heldItem > 0x10000000 && heldItem < 0x7FFFFFFFFFFF) {
+                            int32_t weaponTagIdx = Read<int32_t>(heldItem + O::BHItem_ItemId);
+                            std::string tagStr = ResolveFName(weaponTagIdx);
+                            if (!tagStr.empty()) {
+                                size_t dot = tagStr.rfind('.');
+                                p.weaponName = (dot != std::string::npos) ? tagStr.substr(dot + 1) : tagStr;
+                            }
+                        }
+                    }
+
+                    p.hasViewDir = false;
+                    uintptr_t controller = Read<uintptr_t>(actor + O::APawn_Controller);
+                    if (controller && controller > 0x10000000 && controller < 0x7FFFFFFFFFFF) {
+                        p.viewRotation = Read<DRotator>(controller + O::Controller_ControlRotation);
+                        p.hasViewDir = true;
+                    }
+                    if (!p.hasViewDir) {
+                        uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
+                        if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
+                            DRotator aim = Read<DRotator>(animInst + O::AnimInst_AimRotation);
+                            if (fabs(aim.pitch) < 180.0 && fabs(aim.yaw) <= 360.0) {
+                                p.viewRotation = aim;
+                                p.hasViewDir = true;
+                            }
+                        }
+                    }
+                    if (!p.hasViewDir) {
+                        float rvPitch = Read<float>(actor + O::BHPawn_SmoothedRemoteViewPitch);
+                        uint16_t rvYawComp = Read<uint16_t>(actor + O::BHPawn_RemoteViewYaw);
+                        if (fabs(rvPitch) < 180.f && rvYawComp != 0) {
+                            p.viewRotation.pitch = (double)rvPitch;
+                            p.viewRotation.yaw = (double)rvYawComp * (360.0 / 65536.0);
+                            p.viewRotation.roll = 0.0;
+                            p.hasViewDir = true;
+                        }
+                    }
+
+                    {
+                        p.visible = true;
+                        p.aimVisible = true;
+                        float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                        uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                        bool recentlyRendered = (renderBits & 0x80) != 0;
+                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
+                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
+                            p.visible = rendered || recentlyRendered;
+                            p.aimVisible = rendered || recentlyRendered;
+                        } else {
+                            p.visible = recentlyRendered;
+                            p.aimVisible = recentlyRendered;
+                        }
+                    }
+
+                    uintptr_t sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
+                    if (!sa) sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
+                    BoneIndices bi = sa ? ResolveBones(sa) : BoneIndices{};
+                    if (!bi.valid) bi = FALLBACK_BONES;
+
+                    p.boneCount = 22;
+                    if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
+                        p.headPos = p.position;
+                        p.headPos.z += 160.0;
+                        for (int b = 0; b < 22; b++) p.bones[b] = {};
+                        p.bones[0] = p.headPos;
+                    } else {
+                        p.headPos = p.bones[0];
+                    }
+                    p.resolvedBones = bi;
+                    p.velocity = {};
+                    if (tickDt > 0.001f && tickDt < 2.f) {
+                        auto it = s_prevPositions.find(p.pawn);
+                        if (it != s_prevPositions.end())
+                            p.velocity = (p.position - it->second) * (1.0 / tickDt);
+                    }
+                    s_prevPositions[p.pawn] = p.position;
+                    p.isValid = true;
+                    knownPawns3.insert(actor);
+                    s_workerPlayers.push_back(p);
+                    wpFound++;
+                }
+            }
+            if (wpFound > 0) {
+                static auto s_lastWpLog = std::chrono::steady_clock::now();
+                if (std::chrono::duration<float>(std::chrono::steady_clock::now() - s_lastWpLog).count() > 15.f) {
+                    s_lastWpLog = std::chrono::steady_clock::now();
+                    char buf[128];
+                    sprintf_s(buf, "WorldPartition found %d extra players", wpFound);
+                    WriteStartupLog("WorldPartitionScan", buf);
+                }
+            }
+        }
+    }
+
     // Build set of teammate pawns for vehicle team detection
     std::unordered_set<uintptr_t> teammatePawns;
     teammatePawns.insert(g_localPawn);
@@ -4171,7 +4614,7 @@ static void UpdatePlayers() {
                 v.actor = actor;
                 {
                     bool gotVPos = false;
-                    for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+                    for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
                         DTransform t = Read<DTransform>(rootComp + off);
                         if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                             (t.translation.x != 0.0 || t.translation.y != 0.0) &&
@@ -4325,11 +4768,11 @@ static void UpdatePlayers() {
         }
 
         // Streaming level vehicle scan
+        std::unordered_set<uintptr_t> knownVehicles;
+        for (auto& vv : s_workerVehicles) knownVehicles.insert(vv.actor);
         uintptr_t slVData = Read<uintptr_t>(gworld + O::UWorld_StreamingLevels);
         int32_t slVCount = Read<int32_t>(gworld + O::UWorld_StreamingLevels + 8);
         if (slVData && slVData > 0x10000000 && slVData < 0x7FFFFFFFFFFF && slVCount > 0 && slVCount <= 200) {
-            std::unordered_set<uintptr_t> knownVehicles;
-            for (auto& vv : s_workerVehicles) knownVehicles.insert(vv.actor);
 
             for (int si = 0; si < slVCount; si++) {
                 uintptr_t streaming = Read<uintptr_t>(slVData + si * 8);
@@ -4357,7 +4800,7 @@ static void UpdatePlayers() {
                     v.actor = actor;
                     {
                         bool gotVPos = false;
-                        for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+                        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
                             DTransform t = Read<DTransform>(rootComp + off);
                             if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                                 (t.translation.x != 0.0 || t.translation.y != 0.0) &&
@@ -4483,6 +4926,83 @@ static void UpdatePlayers() {
                     }
                     s_prevVehPositions[v.actor] = v.position;
                     if (v.hasLocalPlayer) { v.isValid = false; continue; }
+                    v.isValid = true;
+                    knownVehicles.insert(actor);
+                    s_workerVehicles.push_back(v);
+                }
+            }
+        }
+
+        // UWorld::Levels scan — catches vehicles in World Partition sub-levels
+        uintptr_t lvlOff = g_levelsOffset ? g_levelsOffset : O::UWorld_Levels;
+        uintptr_t lvlData = Read<uintptr_t>(gworld + lvlOff);
+        int32_t lvlCount = Read<int32_t>(gworld + lvlOff + 8);
+        if (lvlData && lvlData > 0x10000000 && lvlData < 0x7FFFFFFFFFFF && lvlCount > 0 && lvlCount <= 500) {
+            for (int li = 0; li < lvlCount; li++) {
+                uintptr_t level = Read<uintptr_t>(lvlData + li * 8);
+                if (!level || level < 0x10000000 || level >= 0x7FFFFFFFFFFF) continue;
+                if (level == persistLevel) continue;
+                uintptr_t slActors = Read<uintptr_t>(level + O::ULevel_Actors);
+                int32_t slActCount = Read<int32_t>(level + O::ULevel_Actors + 8);
+                if (!slActors || slActCount <= 0 || slActCount >= 50000) continue;
+                for (int ai = 0; ai < slActCount; ai++) {
+                    uintptr_t actor = Read<uintptr_t>(slActors + ai * 8);
+                    if (!actor || actor < 0x10000000 || actor >= 0x7FFFFFFFFFFF) continue;
+                    if (knownVehicles.count(actor)) continue;
+                    std::string className;
+                    if (!IsVehicleActor(actor, className)) continue;
+                    uintptr_t rootComp = Read<uintptr_t>(actor + O::AActor_RootComponent);
+                    if (!rootComp) continue;
+                    VehicleData v{};
+                    v.actor = actor;
+                    {
+                        bool gotVPos = false;
+                        for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
+                            DTransform t = Read<DTransform>(rootComp + off);
+                            if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
+                                (t.translation.x != 0.0 || t.translation.y != 0.0) &&
+                                fabs(t.translation.x) < 1e9 && fabs(t.translation.y) < 1e9) {
+                                v.position = t.translation;
+                                gotVPos = true;
+                                break;
+                            }
+                        }
+                        if (!gotVPos) v.position = Read<DVec3>(rootComp + O::Scene_RelativeLocation);
+                    }
+                    if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
+                    v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
+                    if (v.distance > cfg.vehicleMaxDistance) continue;
+                    uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
+                    v.occupantCount = 0;
+                    v.isDestroyed = Read<uint8_t>(actor + O::Vehicle_Destroyed) != 0;
+                    v.engineRunning = Read<uint8_t>(actor + O::Vehicle_EngineRunning) != 0;
+                    v.hasLocalPlayer = false;
+                    v.isTeamVehicle = false;
+                    v.isNeutral = false;
+                    if (seatComp) {
+                        uintptr_t occArray = Read<uintptr_t>(seatComp + O::SeatComp_Occupants);
+                        int32_t occArrCount = Read<int32_t>(seatComp + O::SeatComp_Occupants + 8);
+                        if (occArray && occArrCount > 0 && occArrCount < 30) {
+                            for (int oi = 0; oi < occArrCount; oi++) {
+                                uintptr_t opComp = Read<uintptr_t>(occArray + oi * 8);
+                                if (!opComp || opComp < 0x10000000) continue;
+                                uintptr_t outerPawn = Read<uintptr_t>(opComp + 0x20);
+                                if (!outerPawn || outerPawn < 0x10000000) continue;
+                                v.occupantCount++;
+                                vehicleOccupantPawns.insert(outerPawn);
+                                if (!v.isTeamVehicle) {
+                                    if (outerPawn == g_localPawn) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
+                                    else if (teammatePawns.count(outerPawn)) v.isTeamVehicle = true;
+                                }
+                            }
+                        }
+                    }
+                    size_t bp = className.find("_BP"); if (bp != std::string::npos) className = className.substr(0, bp);
+                    size_t c = className.find("_C"); if (c != std::string::npos) className = className.substr(0, c);
+                    v.typeName = ResolveVehicleName(className);
+                    v.isAir = IsVehicleAir(className);
+                    v.velocity = {}; v.speed = 0.f;
+                    if (v.hasLocalPlayer) continue;
                     v.isValid = true;
                     knownVehicles.insert(actor);
                     s_workerVehicles.push_back(v);
@@ -4657,7 +5177,7 @@ static void UpdatePlayers() {
 // ============================================================================
 static void ApplyNoRecoil() {
     auto& cfg = g_config.Active();
-    if (!cfg.noRecoil || !IsValidPtr(g_localPawn)) return;
+    if (!cfg.noRecoil || !s_workerCam.valid || !IsValidPtr(g_localPawn)) return;
     uintptr_t weapBehav = Read<uintptr_t>(g_localPawn + O::WDChar_WeaponBehavior);
     if (!IsValidPtr(weapBehav)) return;
     uintptr_t statsData = Read<uintptr_t>(weapBehav + O::WeaponBehavior_StatsData);
@@ -4681,7 +5201,7 @@ static void ApplyNoRecoil() {
 
 static void ApplyNoSway() {
     auto& cfg = g_config.Active();
-    if (!cfg.noSway || !IsValidPtr(g_localPawn)) return;
+    if (!cfg.noSway || !s_workerCam.valid || !IsValidPtr(g_localPawn)) return;
     uintptr_t weapBehav = Read<uintptr_t>(g_localPawn + O::WDChar_WeaponBehavior);
     if (!IsValidPtr(weapBehav)) return;
 
@@ -4827,7 +5347,7 @@ static void DrawESP() {
         if (p.isDowned && !cfg.espShowDowned) continue;
         if (p.isInVehicle && p.isTeammate) { dVehSkip++; continue; }
         if (p.distance > cfg.espMaxDistance) { dDistSkip++; continue; }
-        if (cfg.espVisCheck && !p.visible && !p.isTeammate) { dVisSkip++; continue; }
+        if (cfg.espVisCheck && !p.visible && !p.isTeammate) dVisSkip++;
         static const float colDead[4] = {0.45f, 0.45f, 0.45f, 0.55f};
         const float* boxCol  = p.isDead ? colDead : (p.isTeammate ? cfg.colTeamBox  : (p.visible ? cfg.colVisBox  : cfg.colHidBox));
         const float* skelCol = p.isDead ? colDead : (p.isTeammate ? cfg.colTeamSkel : (p.visible ? cfg.colVisSkel : cfg.colHidSkel));
@@ -4839,7 +5359,7 @@ static void DrawESP() {
         // Fallback: if headPos W2S fails, try raw position + standing height
         if (!headOk) {
             DVec3 standPos = p.position;
-            standPos.z += 160.0;
+            standPos.z += 80.0;
             headOk = WorldToScreen(standPos, headScr);
         }
 
@@ -5457,15 +5977,23 @@ static void RunAimbot() {
 
     if (cfg.aimLock) g_lockedTarget = bestPawn;
 
+    static float accumX = 0.f, accumY = 0.f;
+    static uintptr_t lastAimPawn = 0;
+    if (bestPawn != lastAimPawn) { accumX = 0.f; accumY = 0.f; lastAimPawn = bestPawn; }
+
     float dx = bestTarget.x - cx;
     float dy = bestTarget.y - cy;
     float dt = ImMax(g_deltaTime, 0.001f);
     float smoothFactor = 1.f - expf(-dt * 60.f / ImMax(cfg.smooth, 1.f));
-    float moveX = dx * smoothFactor;
-    float moveY = dy * smoothFactor;
-    if (fabsf(moveX) > 0.2f || fabsf(moveY) > 0.2f) {
+    accumX += dx * smoothFactor;
+    accumY += dy * smoothFactor;
+    LONG mx = (LONG)accumX;
+    LONG my = (LONG)accumY;
+    if (mx != 0 || my != 0) {
+        accumX -= (float)mx;
+        accumY -= (float)my;
         INPUT input{}; input.type = INPUT_MOUSE;
-        input.mi.dx = (LONG)moveX; input.mi.dy = (LONG)moveY;
+        input.mi.dx = mx; input.mi.dy = my;
         input.mi.dwFlags = MOUSEEVENTF_MOVE;
         SendInput(1, &input, sizeof(INPUT));
     }
@@ -7874,7 +8402,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 if (p.rootComp > 0x10000000 && p.rootComp < 0x7FFFFFFFFFFF) {
                     DVec3 freshPos{};
                     bool gotFresh = false;
-                    for (uintptr_t off : {(uintptr_t)O::Scene_ComponentToWorld, (uintptr_t)0x1D0, (uintptr_t)0x1E0}) {
+                    for (uintptr_t off : {(uintptr_t)0x1D0, (uintptr_t)0x1E0, (uintptr_t)0x1F0, (uintptr_t)0x200, (uintptr_t)0x210}) {
                         DTransform t = Read<DTransform>(p.rootComp + off);
                         if (fabs(t.rotation.w) >= 0.01 && fabs(t.rotation.w) <= 1.01 &&
                             (t.translation.x != 0.0 || t.translation.y != 0.0) &&
