@@ -3273,6 +3273,8 @@ static void UpdatePlayers() {
 
     static std::unordered_map<uintptr_t, bool> s_factionCache;
     static std::unordered_map<uintptr_t, bool> s_persistentDeath;
+    struct DeadCache { PlayerData data; std::chrono::steady_clock::time_point deathTime; };
+    static std::unordered_map<uintptr_t, DeadCache> s_deadPlayerCache;
     static uint32_t s_deadTagId = 0;
     static uint32_t s_dbnoTagId = 0;
     static uint32_t s_aliveTagId = 0;
@@ -3323,6 +3325,7 @@ static void UpdatePlayers() {
         s_prevVehPositions.clear();
         s_factionCache.clear();
         s_persistentDeath.clear();
+        s_deadPlayerCache.clear();
         s_deadTagId = 0;
         s_dbnoTagId = 0;
         s_aliveTagId = 0;
@@ -3424,7 +3427,6 @@ static void UpdatePlayers() {
                 if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                 else p.isDead = true;
             }
-            if (p.isDead && !cfg.espShowDead) { dbgDead++; continue; }
             if (p.isDead) dbgDead++;
             p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
@@ -3653,6 +3655,10 @@ static void UpdatePlayers() {
             }
             s_prevPositions[p.pawn] = p.position;
             p.isValid = true;
+            if (p.isDead) {
+                s_deadPlayerCache[actor] = {p, tickNow};
+                if (!cfg.espShowDead) continue;
+            }
             s_workerPlayers.push_back(p);
         }
 
@@ -3746,7 +3752,6 @@ static void UpdatePlayers() {
                     if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                     else p.isDead = true;
                 }
-                if (p.isDead && !cfg.espShowDead) continue;
                 p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
                 p.stance = 2;
@@ -3956,6 +3961,10 @@ static void UpdatePlayers() {
                 s_prevPositions[p.pawn] = p.position;
 
                 p.isValid = true;
+                if (p.isDead) {
+                    s_deadPlayerCache[actor] = {p, tickNow};
+                    if (!cfg.espShowDead) continue;
+                }
                 s_workerPlayers.push_back(p);
                 actorScanFound++;
             }
@@ -4093,7 +4102,6 @@ static void UpdatePlayers() {
                         if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                         else p.isDead = true;
                     }
-                    if (p.isDead && !cfg.espShowDead) continue;
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
                     p.stance = 2;
@@ -4262,6 +4270,10 @@ static void UpdatePlayers() {
                     }
                     s_prevPositions[p.pawn] = p.position;
                     p.isValid = true;
+                    if (p.isDead) {
+                        s_deadPlayerCache[actor] = {p, tickNow};
+                        if (!cfg.espShowDead) { knownPawns2.insert(actor); continue; }
+                    }
                     knownPawns2.insert(actor);
                     s_workerPlayers.push_back(p);
                     slFound++;
@@ -4400,7 +4412,6 @@ static void UpdatePlayers() {
                         if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
                         else p.isDead = true;
                     }
-                    if (p.isDead && !cfg.espShowDead) continue;
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
 
                     p.stance = 2;
@@ -4569,6 +4580,10 @@ static void UpdatePlayers() {
                     }
                     s_prevPositions[p.pawn] = p.position;
                     p.isValid = true;
+                    if (p.isDead) {
+                        s_deadPlayerCache[actor] = {p, tickNow};
+                        if (!cfg.espShowDead) { knownPawns3.insert(actor); continue; }
+                    }
                     knownPawns3.insert(actor);
                     s_workerPlayers.push_back(p);
                     wpFound++;
@@ -4583,6 +4598,32 @@ static void UpdatePlayers() {
                     WriteStartupLog("WorldPartitionScan", buf);
                 }
             }
+        }
+    }
+
+    // Inject cached dead players whose pawns were destroyed (not found by any scan)
+    if (cfg.espShowDead) {
+        std::unordered_set<uintptr_t> livePawns;
+        for (auto& p : s_workerPlayers)
+            if (p.isValid) livePawns.insert(p.pawn);
+
+        for (auto it = s_deadPlayerCache.begin(); it != s_deadPlayerCache.end(); ) {
+            float age = std::chrono::duration<float>(tickNow - it->second.deathTime).count();
+            if (age > 120.f) { it = s_deadPlayerCache.erase(it); continue; }
+            if (!livePawns.count(it->first)) {
+                PlayerData dp = it->second.data;
+                dp.isDead = true;
+                dp.visible = false;
+                dp.aimVisible = false;
+                s_workerPlayers.push_back(dp);
+            }
+            ++it;
+        }
+    } else {
+        for (auto it = s_deadPlayerCache.begin(); it != s_deadPlayerCache.end(); ) {
+            float age = std::chrono::duration<float>(tickNow - it->second.deathTime).count();
+            if (age > 120.f) it = s_deadPlayerCache.erase(it);
+            else ++it;
         }
     }
 
