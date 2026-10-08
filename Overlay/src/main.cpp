@@ -2138,26 +2138,14 @@ static bool ReadHealth(uintptr_t pawn, float& hp, float& maxHp) {
     maxHp = Read<float>(vitality + O::Vitality_MaxHealth);
     if (!std::isfinite(maxHp) || maxHp <= 0.f || maxHp > 999.f) return false;
 
-    float currentHp = 0.f;
-    bool attrReadOk = false;
-    uintptr_t healthAttr = Read<uintptr_t>(vitality + O::Vitality_HealthAttr);
-    if (healthAttr) {
-        double attrVal = Read<double>(healthAttr + O::AttrObj_CurrentValue);
-        if (std::isfinite(attrVal) && attrVal >= 0.0 && attrVal <= 999.0) {
-            currentHp = (float)attrVal;
-            attrReadOk = true;
-        }
+    float currentHp = Read<float>(vitality + O::Vitality_BaseHealth);
+    if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) {
+        float inlineHp = Read<float>(pawn + 0x808);
+        if (std::isfinite(inlineHp) && inlineHp >= 0.f && inlineHp <= 999.f)
+            currentHp = inlineHp;
+        else
+            return false;
     }
-    if (!attrReadOk) {
-        currentHp = Read<float>(vitality + O::Vitality_BaseHealth);
-        if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) {
-            float inlineHp = Read<float>(pawn + 0x808);
-            if (std::isfinite(inlineHp) && inlineHp >= 0.f && inlineHp <= 999.f)
-                currentHp = inlineHp;
-        }
-    }
-
-    if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) return false;
 
     hp = std::clamp(currentHp, 0.f, maxHp);
     return true;
@@ -3270,9 +3258,6 @@ static void UpdatePlayers() {
     // Dedup: track pawn addresses across all 4 scan loops
     std::unordered_set<uintptr_t> seenPawns;
 
-    // Aim vis grace: aimbot keeps target for 150ms after ESP vis lost
-    static std::unordered_map<uintptr_t, std::chrono::steady_clock::time_point> s_lastVisibleTime;
-
     // Velocity tracking for position interpolation
     static std::unordered_map<uintptr_t, DVec3> s_prevPositions;
     static std::unordered_map<uintptr_t, DVec3> s_prevVehPositions;
@@ -3638,14 +3623,7 @@ static void UpdatePlayers() {
                 } else {
                     p.visible = recentlyRendered;
                 }
-                if (p.visible) {
-                    s_lastVisibleTime[p.pawn] = tickNow;
-                    p.aimVisible = true;
-                } else {
-                    auto vit = s_lastVisibleTime.find(p.pawn);
-                    p.aimVisible = (vit != s_lastVisibleTime.end() &&
-                        std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
-                }
+                p.aimVisible = p.visible;
             }
 
             dbgOnScreen++;
@@ -3953,14 +3931,7 @@ static void UpdatePlayers() {
                     } else {
                         p.visible = recentlyRendered;
                     }
-                    if (p.visible) {
-                        s_lastVisibleTime[p.pawn] = tickNow;
-                        p.aimVisible = true;
-                    } else {
-                        auto vit = s_lastVisibleTime.find(p.pawn);
-                        p.aimVisible = (vit != s_lastVisibleTime.end() &&
-                            std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
-                    }
+                    p.aimVisible = p.visible;
                 }
 
                 p.boneCount = 22;
@@ -4266,14 +4237,7 @@ static void UpdatePlayers() {
                         } else {
                             p.visible = recentlyRendered;
                         }
-                        if (p.visible) {
-                            s_lastVisibleTime[p.pawn] = tickNow;
-                            p.aimVisible = true;
-                        } else {
-                            auto vit = s_lastVisibleTime.find(p.pawn);
-                            p.aimVisible = (vit != s_lastVisibleTime.end() &&
-                                std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
-                        }
+                        p.aimVisible = p.visible;
                     }
 
                     uintptr_t sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
@@ -4583,14 +4547,7 @@ static void UpdatePlayers() {
                         } else {
                             p.visible = recentlyRendered;
                         }
-                        if (p.visible) {
-                            s_lastVisibleTime[p.pawn] = tickNow;
-                            p.aimVisible = true;
-                        } else {
-                            auto vit = s_lastVisibleTime.find(p.pawn);
-                            p.aimVisible = (vit != s_lastVisibleTime.end() &&
-                                std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
-                        }
+                        p.aimVisible = p.visible;
                     }
 
                     uintptr_t sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
