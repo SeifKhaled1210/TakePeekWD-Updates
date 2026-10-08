@@ -2139,19 +2139,22 @@ static bool ReadHealth(uintptr_t pawn, float& hp, float& maxHp) {
     if (!std::isfinite(maxHp) || maxHp <= 0.f || maxHp > 999.f) return false;
 
     float currentHp = 0.f;
+    bool attrReadOk = false;
     uintptr_t healthAttr = Read<uintptr_t>(vitality + O::Vitality_HealthAttr);
     if (healthAttr) {
         double attrVal = Read<double>(healthAttr + O::AttrObj_CurrentValue);
-        if (std::isfinite(attrVal) && attrVal >= 0.0 && attrVal <= 999.0)
+        if (std::isfinite(attrVal) && attrVal >= 0.0 && attrVal <= 999.0) {
             currentHp = (float)attrVal;
+            attrReadOk = true;
+        }
     }
-    if (currentHp <= 0.f)
+    if (!attrReadOk) {
         currentHp = Read<float>(vitality + O::Vitality_BaseHealth);
-
-    if (currentHp <= 0.f) {
-        float inlineHp = Read<float>(pawn + 0x808);
-        if (std::isfinite(inlineHp) && inlineHp > 0.f && inlineHp <= 999.f)
-            currentHp = inlineHp;
+        if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) {
+            float inlineHp = Read<float>(pawn + 0x808);
+            if (std::isfinite(inlineHp) && inlineHp >= 0.f && inlineHp <= 999.f)
+                currentHp = inlineHp;
+        }
     }
 
     if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) return false;
@@ -3264,6 +3267,12 @@ static void UpdatePlayers() {
 
     auto& cfg = g_config.Active();
 
+    // Dedup: track pawn addresses across all 4 scan loops
+    std::unordered_set<uintptr_t> seenPawns;
+
+    // Aim vis grace: aimbot keeps target for 150ms after ESP vis lost
+    static std::unordered_map<uintptr_t, std::chrono::steady_clock::time_point> s_lastVisibleTime;
+
     // Velocity tracking for position interpolation
     static std::unordered_map<uintptr_t, DVec3> s_prevPositions;
     static std::unordered_map<uintptr_t, DVec3> s_prevVehPositions;
@@ -3275,7 +3284,6 @@ static void UpdatePlayers() {
     static std::unordered_map<uintptr_t, bool> s_persistentDeath;
     struct DeadCache { PlayerData data; std::chrono::steady_clock::time_point deathTime; };
     static std::unordered_map<uintptr_t, DeadCache> s_deadPlayerCache;
-    static std::unordered_map<uintptr_t, std::chrono::steady_clock::time_point> s_lastVisibleTime;
     static uint32_t s_deadTagId = 0;
     static uint32_t s_dbnoTagId = 0;
     static uint32_t s_aliveTagId = 0;
@@ -3327,7 +3335,6 @@ static void UpdatePlayers() {
         s_factionCache.clear();
         s_persistentDeath.clear();
         s_deadPlayerCache.clear();
-        s_lastVisibleTime.clear();
         s_deadTagId = 0;
         s_dbnoTagId = 0;
         s_aliveTagId = 0;
@@ -3631,11 +3638,13 @@ static void UpdatePlayers() {
                 } else {
                     p.visible = recentlyRendered;
                 }
-                p.aimVisible = recentlyRendered;
-                if (p.visible || p.aimVisible) s_lastVisibleTime[actor] = tickNow;
-                else if (s_lastVisibleTime.count(actor)) {
-                    float age = std::chrono::duration<float>(tickNow - s_lastVisibleTime[actor]).count();
-                    if (age <= 0.3f) p.aimVisible = true;
+                if (p.visible) {
+                    s_lastVisibleTime[p.pawn] = tickNow;
+                    p.aimVisible = true;
+                } else {
+                    auto vit = s_lastVisibleTime.find(p.pawn);
+                    p.aimVisible = (vit != s_lastVisibleTime.end() &&
+                        std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
                 }
             }
 
@@ -3665,6 +3674,7 @@ static void UpdatePlayers() {
                 s_deadPlayerCache[actor] = {p, tickNow};
                 if (!cfg.espShowDead) continue;
             }
+            if (!seenPawns.insert(p.pawn).second) continue;
             s_workerPlayers.push_back(p);
         }
 
@@ -3943,11 +3953,13 @@ static void UpdatePlayers() {
                     } else {
                         p.visible = recentlyRendered;
                     }
-                    p.aimVisible = recentlyRendered;
-                    if (p.visible || p.aimVisible) s_lastVisibleTime[actor] = tickNow;
-                    else if (s_lastVisibleTime.count(actor)) {
-                        float age = std::chrono::duration<float>(tickNow - s_lastVisibleTime[actor]).count();
-                        if (age <= 0.3f) p.aimVisible = true;
+                    if (p.visible) {
+                        s_lastVisibleTime[p.pawn] = tickNow;
+                        p.aimVisible = true;
+                    } else {
+                        auto vit = s_lastVisibleTime.find(p.pawn);
+                        p.aimVisible = (vit != s_lastVisibleTime.end() &&
+                            std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
                     }
                 }
 
@@ -3975,6 +3987,7 @@ static void UpdatePlayers() {
                     s_deadPlayerCache[actor] = {p, tickNow};
                     if (!cfg.espShowDead) continue;
                 }
+                if (!seenPawns.insert(p.pawn).second) continue;
                 s_workerPlayers.push_back(p);
                 actorScanFound++;
             }
@@ -4253,11 +4266,13 @@ static void UpdatePlayers() {
                         } else {
                             p.visible = recentlyRendered;
                         }
-                        p.aimVisible = recentlyRendered;
-                        if (p.visible || p.aimVisible) s_lastVisibleTime[actor] = tickNow;
-                        else if (s_lastVisibleTime.count(actor)) {
-                            float age = std::chrono::duration<float>(tickNow - s_lastVisibleTime[actor]).count();
-                            if (age <= 0.3f) p.aimVisible = true;
+                        if (p.visible) {
+                            s_lastVisibleTime[p.pawn] = tickNow;
+                            p.aimVisible = true;
+                        } else {
+                            auto vit = s_lastVisibleTime.find(p.pawn);
+                            p.aimVisible = (vit != s_lastVisibleTime.end() &&
+                                std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
                         }
                     }
 
@@ -4289,6 +4304,7 @@ static void UpdatePlayers() {
                         if (!cfg.espShowDead) { knownPawns2.insert(actor); continue; }
                     }
                     knownPawns2.insert(actor);
+                    if (!seenPawns.insert(p.pawn).second) continue;
                     s_workerPlayers.push_back(p);
                     slFound++;
                 }
@@ -4567,11 +4583,13 @@ static void UpdatePlayers() {
                         } else {
                             p.visible = recentlyRendered;
                         }
-                        p.aimVisible = recentlyRendered;
-                        if (p.visible || p.aimVisible) s_lastVisibleTime[actor] = tickNow;
-                        else if (s_lastVisibleTime.count(actor)) {
-                            float age = std::chrono::duration<float>(tickNow - s_lastVisibleTime[actor]).count();
-                            if (age <= 0.3f) p.aimVisible = true;
+                        if (p.visible) {
+                            s_lastVisibleTime[p.pawn] = tickNow;
+                            p.aimVisible = true;
+                        } else {
+                            auto vit = s_lastVisibleTime.find(p.pawn);
+                            p.aimVisible = (vit != s_lastVisibleTime.end() &&
+                                std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - vit->second).count() < 150);
                         }
                     }
 
@@ -4603,6 +4621,7 @@ static void UpdatePlayers() {
                         if (!cfg.espShowDead) { knownPawns3.insert(actor); continue; }
                     }
                     knownPawns3.insert(actor);
+                    if (!seenPawns.insert(p.pawn).second) continue;
                     s_workerPlayers.push_back(p);
                     wpFound++;
                 }
@@ -4617,19 +4636,6 @@ static void UpdatePlayers() {
                 }
             }
         }
-    }
-
-    // Deduplicate players found by multiple scan loops
-    {
-        std::unordered_set<uintptr_t> seenPawns;
-        auto end = std::remove_if(s_workerPlayers.begin(), s_workerPlayers.end(),
-            [&seenPawns](const PlayerData& p) {
-                if (!p.isValid || !p.pawn) return false;
-                if (seenPawns.count(p.pawn)) return true;
-                seenPawns.insert(p.pawn);
-                return false;
-            });
-        s_workerPlayers.erase(end, s_workerPlayers.end());
     }
 
     // Inject cached dead players whose pawns were destroyed (not found by any scan)
@@ -5267,11 +5273,11 @@ static void ApplyNoRecoil() {
         }
     }
 
-    SafeWrite<float>(statsData + O::WeaponStats_PostPatternRandomH, 0.0f);
-    SafeWrite<float>(statsData + O::WeaponStats_PostPatternRandomV, 0.0f);
     SafeWrite<float>(statsData + O::WeaponStats_RecoilYawMinMax, 0.0f);
     SafeWrite<float>(statsData + O::WeaponStats_RecoilYawMinMax + 4, 0.0f);
     SafeWrite<float>(statsData + O::WeaponStats_RecoilPitchMax, 0.0f);
+    SafeWrite<float>(statsData + O::WeaponStats_PostPatternRandomH, 0.0f);
+    SafeWrite<float>(statsData + O::WeaponStats_PostPatternRandomV, 0.0f);
 }
 
 static void ApplyNoSway() {
@@ -6080,7 +6086,6 @@ static void RunAimbot() {
 static bool s_triggerFiring = false;
 static bool s_triggerHasTarget = false;
 static std::chrono::steady_clock::time_point s_triggerAcquireTime;
-static std::chrono::steady_clock::time_point s_triggerFireStart;
 static std::chrono::steady_clock::time_point s_triggerLastOnTarget;
 
 static void RunTriggerbot() {
@@ -6101,8 +6106,6 @@ static void RunTriggerbot() {
 
     float cx = (float)g_screenW * 0.5f, cy = (float)g_screenH * 0.5f;
     bool shouldFire = false;
-    bool shouldFireLoose = false;
-    float threshMul = s_triggerFiring ? 3.0f : 1.0f;
 
     for (auto& p : g_players) {
         if (!p.isValid || (p.isTeammate && cfg.teamCheck)) continue;
@@ -6129,16 +6132,15 @@ static void RunTriggerbot() {
         }
         if (!hit) continue;
 
-        float threshold = 800.f / (p.distance + 1.f);
-        if (threshold < 8.f) threshold = 8.f;
-        if (threshold > 60.f) threshold = 60.f;
-        if (bestDist < threshold) { shouldFire = true; shouldFireLoose = true; break; }
-        if (bestDist < threshold * threshMul) { shouldFireLoose = true; break; }
+        float threshold = 600.f / (p.distance + 1.f);
+        if (p.distance < 20.f) threshold = 40.f;
+        if (threshold < 6.f) threshold = 6.f;
+        if (threshold > 50.f) threshold = 50.f;
+        if (bestDist < threshold) { shouldFire = true; break; }
     }
 
     auto now = std::chrono::steady_clock::now();
-
-    if (shouldFire || (s_triggerFiring && shouldFireLoose)) {
+    if (shouldFire) {
         s_triggerLastOnTarget = now;
         if (!s_triggerHasTarget) {
             s_triggerAcquireTime = now;
@@ -6149,18 +6151,12 @@ static void RunTriggerbot() {
                 INPUT in{}; in.type = INPUT_MOUSE; in.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
                 SendInput(1, &in, sizeof(INPUT));
                 s_triggerFiring = true;
-                s_triggerFireStart = now;
-                s_triggerLastOnTarget = now;
             }
         }
     } else {
-        if (s_triggerFiring) {
-            auto sinceFire = std::chrono::duration_cast<std::chrono::milliseconds>(now - s_triggerFireStart).count();
-            auto sinceSeen = std::chrono::duration_cast<std::chrono::milliseconds>(now - s_triggerLastOnTarget).count();
-            if (sinceFire >= 100 && sinceSeen >= 200)
-                releaseTrigger();
-        } else {
-            s_triggerHasTarget = false;
+        long long holdMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - s_triggerLastOnTarget).count();
+        if (!s_triggerHasTarget || holdMs > 100) {
+            releaseTrigger();
         }
     }
 }
