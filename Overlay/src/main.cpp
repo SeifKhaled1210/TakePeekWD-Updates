@@ -2139,22 +2139,19 @@ static bool ReadHealth(uintptr_t pawn, float& hp, float& maxHp) {
     if (!std::isfinite(maxHp) || maxHp <= 0.f || maxHp > 999.f) return false;
 
     float currentHp = 0.f;
-    bool attrRead = false;
     uintptr_t healthAttr = Read<uintptr_t>(vitality + O::Vitality_HealthAttr);
     if (healthAttr) {
         double attrVal = Read<double>(healthAttr + O::AttrObj_CurrentValue);
-        if (std::isfinite(attrVal) && attrVal >= 0.0 && attrVal <= 999.0) {
+        if (std::isfinite(attrVal) && attrVal >= 0.0 && attrVal <= 999.0)
             currentHp = (float)attrVal;
-            attrRead = true;
-        }
     }
-    if (!attrRead) {
+    if (currentHp <= 0.f)
         currentHp = Read<float>(vitality + O::Vitality_BaseHealth);
-        if (!attrRead && currentHp <= 0.f) {
-            float inlineHp = Read<float>(pawn + 0x808);
-            if (std::isfinite(inlineHp) && inlineHp > 0.f && inlineHp <= 999.f)
-                currentHp = inlineHp;
-        }
+
+    if (currentHp <= 0.f) {
+        float inlineHp = Read<float>(pawn + 0x808);
+        if (std::isfinite(inlineHp) && inlineHp > 0.f && inlineHp <= 999.f)
+            currentHp = inlineHp;
     }
 
     if (!std::isfinite(currentHp) || currentHp < 0.f || currentHp > 999.f) return false;
