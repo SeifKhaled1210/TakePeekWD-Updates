@@ -215,6 +215,7 @@ namespace O {
     constexpr uintptr_t Faction_Object      = 0x128; // AWDFaction* — resolved faction actor
     constexpr uintptr_t PS_SquadComponent   = 0x550; // WDSquadComponent* (on PlayerState)
     constexpr uintptr_t PS_VitalityStateTag = 0x61C; // FGameplayTag — alive/downed/dead on PlayerState (+0x58 shift)
+    constexpr uintptr_t PS_VitalityStateTag2 = 0x64C; // FGameplayTag — second vitality tag (DMA ref: 0x5F4 + 0x58 shift)
     constexpr uintptr_t PS_MatchStats       = 0x580; // TArray<FWDMatchStat> — K/D/etc (+0x58 shift)
 
     // --- AWDFaction (faction actor data) ---
@@ -1350,7 +1351,12 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
                      className.find("Transport") != std::string::npos ||
                      className.find("Aviation") != std::string::npos ||
                      className.find("Airplane") != std::string::npos ||
-                     className.find("ROT_") != std::string::npos;
+                     className.find("ROT_") != std::string::npos ||
+                     className.find("VV_") != std::string::npos ||
+                     className.find("WHL_") != std::string::npos ||
+                     className.find("TNK_") != std::string::npos ||
+                     className.find("SPW_") != std::string::npos ||
+                     className.find("Modular") != std::string::npos;
 
     if (nameMatch) {
         g_vehicleClasses.insert(actorClass);
@@ -3400,6 +3406,7 @@ static void UpdatePlayers() {
             p.isDowned = !p.isDead && (p.bleedoutState >= 1);
             if (!p.isDead && !p.isDowned) {
                 uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                if (!vTag) vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag2);
                 if (!vTag) {
                     uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
                     if (inlineTag) vTag = inlineTag;
@@ -3612,13 +3619,13 @@ static void UpdatePlayers() {
             p.distance = (float)((p.position - s_workerCam.location).length() / 100.0);
 
             {
-                p.visible = true;
-                p.aimVisible = true;
+                p.visible = false;
+                p.aimVisible = false;
                 float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                 uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                 bool recentlyRendered = (renderBits & 0x80) != 0;
                 if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                    bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
+                    bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
                     p.visible = rendered || recentlyRendered;
                 } else {
                     p.visible = recentlyRendered;
@@ -3725,6 +3732,7 @@ static void UpdatePlayers() {
                 p.isDowned = !p.isDead && (p.bleedoutState >= 1);
                 if (!p.isDead && !p.isDowned && hasPS) {
                     uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                    if (!vTag) vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag2);
                     if (!vTag) {
                         uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
                         if (inlineTag) vTag = inlineTag;
@@ -3920,13 +3928,13 @@ static void UpdatePlayers() {
                 p.distance = (float)((p.position - s_workerCam.location).length() / 100.0);
 
                 {
-                    p.visible = true;
-                    p.aimVisible = true;
+                    p.visible = false;
+                    p.aimVisible = false;
                     float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                     uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                     bool recentlyRendered = (renderBits & 0x80) != 0;
                     if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
+                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
                         p.visible = rendered || recentlyRendered;
                     } else {
                         p.visible = recentlyRendered;
@@ -4074,6 +4082,7 @@ static void UpdatePlayers() {
 
                     if (!p.isDead && !p.isDowned && hasPS) {
                         uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                        if (!vTag) vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag2);
                         if (!vTag) {
                             uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
                             if (inlineTag) vTag = inlineTag;
@@ -4226,13 +4235,13 @@ static void UpdatePlayers() {
                     }
 
                     {
-                        p.visible = true;
-                        p.aimVisible = true;
+                        p.visible = false;
+                        p.aimVisible = false;
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                         uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                         bool recentlyRendered = (renderBits & 0x80) != 0;
                         if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
+                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
                             p.visible = rendered || recentlyRendered;
                         } else {
                             p.visible = recentlyRendered;
@@ -4384,6 +4393,7 @@ static void UpdatePlayers() {
 
                     if (!p.isDead && !p.isDowned && hasPS) {
                         uint32_t vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag);
+                        if (!vTag) vTag = Read<uint32_t>(playerState + O::PS_VitalityStateTag2);
                         if (!vTag) {
                             uint32_t inlineTag = Read<uint32_t>(actor + O::WDChar_DeathState + 0x08);
                             if (inlineTag) vTag = inlineTag;
@@ -4536,13 +4546,13 @@ static void UpdatePlayers() {
                     }
 
                     {
-                        p.visible = true;
-                        p.aimVisible = true;
+                        p.visible = false;
+                        p.aimVisible = false;
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                         uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                         bool recentlyRendered = (renderBits & 0x80) != 0;
                         if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.15;
+                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
                             p.visible = rendered || recentlyRendered;
                         } else {
                             p.visible = recentlyRendered;
@@ -5929,7 +5939,9 @@ static void RunAimbot() {
     }
 
     float cx = (float)g_screenW * 0.5f, cy = (float)g_screenH * 0.5f;
-    float fovPx = cfg.fov * ((float)g_screenW / 90.f);
+    float camFov = s_workerCam.fov;
+    if (camFov < 10.f || camFov > 170.f) camFov = 90.f;
+    float fovPx = cfg.fov * ((float)g_screenW / camFov);
     if (fovPx < 10.f) fovPx = 10.f;
     float bestDist = fovPx;
     Vec2 bestTarget{cx, cy};
@@ -6388,7 +6400,9 @@ static void DrawFovCircle() {
     if (!cfg.aimbot || !cfg.showFov) return;
     ImDrawList* dl = ImGui::GetBackgroundDrawList();
     float cx = (float)g_screenW * 0.5f, cy = (float)g_screenH * 0.5f;
-    float radius = cfg.fov * ((float)g_screenW / 90.f);
+    float camFov = s_workerCam.fov;
+    if (camFov < 10.f || camFov > 170.f) camFov = 90.f;
+    float radius = cfg.fov * ((float)g_screenW / camFov);
     dl->AddCircle(ImVec2(cx, cy), radius, IM_COL32(255, 255, 255, 40), 64, 1.f);
 }
 
