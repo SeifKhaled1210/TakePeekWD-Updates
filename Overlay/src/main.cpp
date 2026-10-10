@@ -1119,6 +1119,33 @@ static std::unordered_set<uintptr_t> g_dummyClasses;
 static std::unordered_set<uintptr_t> g_playerClasses;
 static std::unordered_set<uintptr_t> g_vehicleClasses;
 static std::unordered_set<uintptr_t> g_nonVehicleClasses;
+static uintptr_t g_vehicleBaseClass = 0;
+static uintptr_t g_modularVehicleClass = 0;
+
+static uintptr_t ObjectAt(int index) {
+    if (index < 0) return 0;
+    uintptr_t chunks = Read<uintptr_t>(g_base + O::GObjects);
+    if (!chunks) return 0;
+    constexpr int OBJECTS_PER_CHUNK = 0x10000;
+    constexpr int ITEM_SIZE = 0x18;
+    uintptr_t chunk = Read<uintptr_t>(chunks + (uint64_t)(index / OBJECTS_PER_CHUNK) * 8);
+    chunk &= ~0xFULL;
+    if (!chunk || chunk < 0x10000000 || chunk >= 0x7FFFFFFFFFFF) return 0;
+    uintptr_t item = chunk + (uint64_t)(index % OBJECTS_PER_CHUNK) * ITEM_SIZE;
+    uintptr_t obj = Read<uintptr_t>(item + 0x10);
+    if (!obj || obj < 0x10000000) obj = Read<uintptr_t>(item + 8);
+    return (obj > 0x10000000 && obj < 0x7FFFFFFFFFFF) ? obj : 0;
+}
+
+static bool IsVehicleClassHierarchy(uintptr_t actorClass) {
+    if (!g_vehicleBaseClass && !g_modularVehicleClass) return false;
+    uintptr_t cls = actorClass;
+    for (int d = 0; d < 16 && cls && cls > 0x10000000 && cls < 0x7FFFFFFFFFFF; d++) {
+        if (cls == g_vehicleBaseClass || cls == g_modularVehicleClass) return true;
+        cls = Read<uintptr_t>(cls + 0x40);
+    }
+    return false;
+}
 
 static void WriteStartupLog(const char* stage, const char* detail = nullptr);
 
@@ -1309,6 +1336,13 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
     if (g_vehicleClasses.count(actorClass)) {
         int32_t nameIdx = Read<int32_t>(actorClass + O::UObject_NamePrivate);
         outName = ResolveFName(nameIdx);
+        return true;
+    }
+
+    if (IsVehicleClassHierarchy(actorClass)) {
+        int32_t nameIdx = Read<int32_t>(actorClass + O::UObject_NamePrivate);
+        outName = ResolveFName(nameIdx);
+        g_vehicleClasses.insert(actorClass);
         return true;
     }
 
@@ -3388,7 +3422,10 @@ static void UpdatePlayers() {
             };
             if (!meshValid(mesh, g_base)) {
                 mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                if (!meshValid(mesh, g_base)) continue;
+                if (!meshValid(mesh, g_base)) {
+                    mesh = Read<uintptr_t>(actor + O::Char_Mesh);
+                    if (!meshValid(mesh, g_base)) continue;
+                }
             }
             dbgValidMesh++;
 
@@ -3706,7 +3743,10 @@ static void UpdatePlayers() {
                 uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                 if (!meshValid(mesh, g_base)) {
                     mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                    if (!meshValid(mesh, g_base)) continue;
+                    if (!meshValid(mesh, g_base)) {
+                        mesh = Read<uintptr_t>(actor + O::Char_Mesh);
+                        if (!meshValid(mesh, g_base)) continue;
+                    }
                 }
 
                 uintptr_t playerState = Read<uintptr_t>(actor + O::APawn_PlayerState);
@@ -4016,7 +4056,10 @@ static void UpdatePlayers() {
                     uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                     if (!meshValid(mesh, g_base)) {
                         mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                        if (!meshValid(mesh, g_base)) continue;
+                        if (!meshValid(mesh, g_base)) {
+                            mesh = Read<uintptr_t>(actor + O::Char_Mesh);
+                            if (!meshValid(mesh, g_base)) continue;
+                        }
                     }
 
                     if (IsActorDummy(actor)) continue;
@@ -4327,7 +4370,10 @@ static void UpdatePlayers() {
                     uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                     if (!meshValid(mesh, g_base)) {
                         mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                        if (!meshValid(mesh, g_base)) continue;
+                        if (!meshValid(mesh, g_base)) {
+                            mesh = Read<uintptr_t>(actor + O::Char_Mesh);
+                            if (!meshValid(mesh, g_base)) continue;
+                        }
                     }
 
                     if (IsActorDummy(actor)) continue;
@@ -4614,7 +4660,12 @@ static void UpdatePlayers() {
         for (auto it = s_deadPlayerCache.begin(); it != s_deadPlayerCache.end(); ) {
             float age = std::chrono::duration<float>(tickNow - it->second.deathTime).count();
             if (age > 120.f) { it = s_deadPlayerCache.erase(it); continue; }
-            if (!livePawns.count(it->first)) {
+            if (livePawns.count(it->first)) {
+                if (age > 5.f) {
+                    it = s_deadPlayerCache.erase(it);
+                    continue;
+                }
+            } else {
                 PlayerData dp = it->second.data;
                 dp.isDead = true;
                 dp.visible = false;
@@ -4638,12 +4689,43 @@ static void UpdatePlayers() {
         if (p.isValid && p.isTeammate) teammatePawns.insert(p.pawn);
     }
 
+    // Resolve vehicle base classes from GObjects (DMA ref indices, refreshed each scan)
+    if (!g_vehicleBaseClass || !g_modularVehicleClass) {
+        for (int idx : {3650, 3651, 3649, 3652, 3648}) {
+            uintptr_t candidate = ObjectAt(idx);
+            if (!candidate) continue;
+            int32_t ni = Read<int32_t>(candidate + O::UObject_NamePrivate);
+            std::string n = ResolveFName(ni);
+            if (n.find("BaseVehicle") != std::string::npos || n.find("BHBaseVehicle") != std::string::npos) {
+                g_vehicleBaseClass = candidate;
+                break;
+            }
+        }
+        for (int idx : {3346, 3347, 3345, 3348, 3344}) {
+            uintptr_t candidate = ObjectAt(idx);
+            if (!candidate) continue;
+            int32_t ni = Read<int32_t>(candidate + O::UObject_NamePrivate);
+            std::string n = ResolveFName(ni);
+            if (n.find("ModularVehicle") != std::string::npos || n.find("Modular") != std::string::npos) {
+                g_modularVehicleClass = candidate;
+                break;
+            }
+        }
+    }
+
     // Vehicle scan — iterate level actors looking for vehicle pawns
     s_workerVehicles.clear();
     std::unordered_set<uintptr_t> vehicleOccupantPawns;
     if (cfg.espVehicles) {
         uintptr_t actorArray = Read<uintptr_t>(persistLevel + O::ULevel_Actors);
         int32_t actorCount = Read<int32_t>(persistLevel + O::ULevel_Actors + 8);
+        if (!actorArray || actorCount <= 0 || actorCount >= 50000) {
+            uintptr_t container = Read<uintptr_t>(persistLevel + 0xE0);
+            if (container && container > 0x10000000 && container < 0x7FFFFFFFFFFF) {
+                actorArray = Read<uintptr_t>(container + 0x28);
+                actorCount = Read<int32_t>(container + 0x30);
+            }
+        }
         if (actorArray && actorCount > 0 && actorCount < 50000) {
             for (int i = 0; i < actorCount; i++) {
                 uintptr_t actor = Read<uintptr_t>(actorArray + i * 8);
@@ -4828,6 +4910,13 @@ static void UpdatePlayers() {
 
                 uintptr_t slActors = Read<uintptr_t>(loadedLevel + O::ULevel_Actors);
                 int32_t slActCount = Read<int32_t>(loadedLevel + O::ULevel_Actors + 8);
+                if (!slActors || slActCount <= 0 || slActCount >= 50000) {
+                    uintptr_t container = Read<uintptr_t>(loadedLevel + 0xE0);
+                    if (container && container > 0x10000000 && container < 0x7FFFFFFFFFFF) {
+                        slActors = Read<uintptr_t>(container + 0x28);
+                        slActCount = Read<int32_t>(container + 0x30);
+                    }
+                }
                 if (!slActors || slActCount <= 0 || slActCount >= 50000) continue;
 
                 for (int ai = 0; ai < slActCount; ai++) {
@@ -4989,6 +5078,13 @@ static void UpdatePlayers() {
                 if (level == persistLevel) continue;
                 uintptr_t slActors = Read<uintptr_t>(level + O::ULevel_Actors);
                 int32_t slActCount = Read<int32_t>(level + O::ULevel_Actors + 8);
+                if (!slActors || slActCount <= 0 || slActCount >= 50000) {
+                    uintptr_t container = Read<uintptr_t>(level + 0xE0);
+                    if (container && container > 0x10000000 && container < 0x7FFFFFFFFFFF) {
+                        slActors = Read<uintptr_t>(container + 0x28);
+                        slActCount = Read<int32_t>(container + 0x30);
+                    }
+                }
                 if (!slActors || slActCount <= 0 || slActCount >= 50000) continue;
                 for (int ai = 0; ai < slActCount; ai++) {
                     uintptr_t actor = Read<uintptr_t>(slActors + ai * 8);
@@ -6034,7 +6130,7 @@ static void RunAimbot() {
     float dx = bestTarget.x - cx;
     float dy = bestTarget.y - cy;
     float dt = ImMax(g_deltaTime, 0.001f);
-    float smoothFactor = 1.f - expf(-dt * 60.f / ImMax(cfg.smooth, 1.f));
+    float smoothFactor = 1.f - expf(-dt * 120.f / ImMax(cfg.smooth, 1.f));
     accumX += dx * smoothFactor;
     accumY += dy * smoothFactor;
     LONG mx = (LONG)accumX;
