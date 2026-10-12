@@ -347,16 +347,18 @@ namespace O {
     constexpr uintptr_t Vehicle_Mesh           = 0x750; // USkeletalMeshComponentVehicle*
     constexpr uintptr_t Vehicle_Config         = 0xA28; // UBHBaseVehicleConfigDataAsset*
     constexpr uintptr_t VehicleVariant_Id      = 0x34;  // FGameplayTag
-    constexpr uintptr_t SeatComp_Occupants     = 0x108; // TArray<UBHVehicleOperatorComponent*>
-    constexpr uintptr_t VehicleOp_CurrentSeat  = 0x198;
-    constexpr uintptr_t Vehicle_Destroyed      = 0x830; // bIsVehicleDestroyed (deobfuscated)
+    constexpr uintptr_t SeatComp_Occupants     = 0x108; // TArray<UBHVehicleOperatorComponent*> (primary)
+    constexpr uintptr_t SeatComp_Occupants2    = 0x118; // TArray<UBHVehicleOperatorComponent*> (secondary)
+    constexpr uintptr_t VehicleOp_CurrentSeat  = 0x188; // FMOperatorSeatInfo (SDK: 0x0188)
+    constexpr uintptr_t VehicleOp_ReplicatedState = 0x198; // FMOperatorReplicatedState (SDK: 0x0198)
+    constexpr uintptr_t Vehicle_EngineRunning  = 0x830; // bIsEngineRunning (SDK: 0x0830)
+    constexpr uintptr_t Vehicle_HornActive     = 0x831; // bIsHornActive (SDK: 0x0831)
+    constexpr uintptr_t Vehicle_Destroyed      = 0x832; // bIsVehicleDestroyed (SDK: 0x0832)
     constexpr uintptr_t VehicleFaction_Stationary = 0x0AC8;
     constexpr uintptr_t VehicleFaction_Airplane   = 0x0BA8;
     constexpr uintptr_t VehicleFaction_Rotary     = 0x0B88;
     constexpr uintptr_t VehicleFaction_Tracked    = 0x0BE8;
     constexpr uintptr_t VehicleFaction_Wheeled    = 0x0BD8;
-    constexpr uintptr_t Vehicle_EngineRunning  = 0x841; // bIsEngineRunning (deobfuscated)
-    constexpr uintptr_t Vehicle_HornActive     = 0x8D8; // bIsHornActive (deobfuscated)
 
     // --- View direction (AController — SDK confirmed at 0x330) ---
     constexpr uintptr_t Controller_ControlRotation = 0x330; // FRotator (3 doubles: pitch, yaw, roll)
@@ -3422,10 +3424,7 @@ static void UpdatePlayers() {
             };
             if (!meshValid(mesh, g_base)) {
                 mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                if (!meshValid(mesh, g_base)) {
-                    mesh = Read<uintptr_t>(actor + O::Char_Mesh);
-                    if (!meshValid(mesh, g_base)) continue;
-                }
+                if (!meshValid(mesh, g_base)) mesh = 0;
             }
             dbgValidMesh++;
 
@@ -3593,7 +3592,7 @@ static void UpdatePlayers() {
                 p.viewRotation = Read<DRotator>(controller + O::Controller_ControlRotation);
                 p.hasViewDir = true;
             }
-            if (!p.hasViewDir) {
+            if (!p.hasViewDir && mesh) {
                 uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
                 if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
                     DRotator aim = Read<DRotator>(animInst + O::AnimInst_AimRotation);
@@ -3614,8 +3613,8 @@ static void UpdatePlayers() {
                 }
             }
 
-            uintptr_t skinnedAsset = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
-            if (!skinnedAsset)
+            uintptr_t skinnedAsset = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
+            if (!skinnedAsset && mesh)
                 skinnedAsset = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
             BoneIndices bi = skinnedAsset ? ResolveBones(skinnedAsset) : BoneIndices{};
             bool dynamicBones = bi.valid;
@@ -3658,14 +3657,16 @@ static void UpdatePlayers() {
             {
                 p.visible = false;
                 p.aimVisible = false;
-                float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                bool recentlyRendered = (renderBits & 0x80) != 0;
-                if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                    bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                    p.visible = rendered || recentlyRendered;
-                } else {
-                    p.visible = recentlyRendered;
+                if (mesh) {
+                    float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                    uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                    bool recentlyRendered = (renderBits & 0x80) != 0;
+                    if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
+                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
+                        p.visible = rendered || recentlyRendered;
+                    } else {
+                        p.visible = recentlyRendered;
+                    }
                 }
                 p.aimVisible = p.visible;
             }
@@ -3673,7 +3674,7 @@ static void UpdatePlayers() {
             dbgOnScreen++;
 
             p.boneCount = 22;
-            if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
+            if (!mesh || !ReadSkeleton(mesh, bi, p.position, p.bones)) {
                 p.headPos = p.position;
                 p.headPos.z += 80.0;
                 for (int b = 0; b < 22; b++) p.bones[b] = {};
@@ -3743,10 +3744,7 @@ static void UpdatePlayers() {
                 uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                 if (!meshValid(mesh, g_base)) {
                     mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                    if (!meshValid(mesh, g_base)) {
-                        mesh = Read<uintptr_t>(actor + O::Char_Mesh);
-                        if (!meshValid(mesh, g_base)) continue;
-                    }
+                    if (!meshValid(mesh, g_base)) mesh = 0;
                 }
 
                 uintptr_t playerState = Read<uintptr_t>(actor + O::APawn_PlayerState);
@@ -3908,7 +3906,7 @@ static void UpdatePlayers() {
                     p.viewRotation = Read<DRotator>(controller + O::Controller_ControlRotation);
                     p.hasViewDir = true;
                 }
-                if (!p.hasViewDir) {
+                if (!p.hasViewDir && mesh) {
                     uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
                     if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
                         DRotator aim = Read<DRotator>(animInst + O::AnimInst_AimRotation);
@@ -3958,9 +3956,9 @@ static void UpdatePlayers() {
                 }
                 if (p.position.x == 0.0 && p.position.y == 0.0 && p.position.z == 0.0) continue;
 
-                DTransform meshC2W = ReadC2W(mesh);
-                uintptr_t skinnedAsset = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
-                if (!skinnedAsset)
+                DTransform meshC2W = mesh ? ReadC2W(mesh) : DTransform{};
+                uintptr_t skinnedAsset = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
+                if (!skinnedAsset && mesh)
                     skinnedAsset = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
                 BoneIndices bi = skinnedAsset ? ResolveBones(skinnedAsset) : BoneIndices{};
                 if (!bi.valid) bi = FALLBACK_BONES;
@@ -3970,22 +3968,24 @@ static void UpdatePlayers() {
                 {
                     p.visible = false;
                     p.aimVisible = false;
-                    float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                    uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                    bool recentlyRendered = (renderBits & 0x80) != 0;
-                    if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                        p.visible = rendered || recentlyRendered;
-                    } else {
-                        p.visible = recentlyRendered;
+                    if (mesh) {
+                        float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                        uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                        bool recentlyRendered = (renderBits & 0x80) != 0;
+                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
+                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
+                            p.visible = rendered || recentlyRendered;
+                        } else {
+                            p.visible = recentlyRendered;
+                        }
                     }
                     p.aimVisible = p.visible;
                 }
 
                 p.boneCount = 22;
-                if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
+                if (!mesh || !ReadSkeleton(mesh, bi, p.position, p.bones)) {
                     p.headPos = p.position;
-                    p.headPos.z += 160.0;
+                    p.headPos.z += 80.0;
                     for (int b = 0; b < 22; b++) p.bones[b] = {};
                     p.bones[0] = p.headPos;
                 } else {
@@ -4056,10 +4056,7 @@ static void UpdatePlayers() {
                     uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                     if (!meshValid(mesh, g_base)) {
                         mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                        if (!meshValid(mesh, g_base)) {
-                            mesh = Read<uintptr_t>(actor + O::Char_Mesh);
-                            if (!meshValid(mesh, g_base)) continue;
-                        }
+                        if (!meshValid(mesh, g_base)) mesh = 0;
                     }
 
                     if (IsActorDummy(actor)) continue;
@@ -4256,7 +4253,7 @@ static void UpdatePlayers() {
                         p.viewRotation = Read<DRotator>(controller + O::Controller_ControlRotation);
                         p.hasViewDir = true;
                     }
-                    if (!p.hasViewDir) {
+                    if (!p.hasViewDir && mesh) {
                         uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
                         if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
                             DRotator aim = Read<DRotator>(animInst + O::AnimInst_AimRotation);
@@ -4280,27 +4277,29 @@ static void UpdatePlayers() {
                     {
                         p.visible = false;
                         p.aimVisible = false;
-                        float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                        uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                        bool recentlyRendered = (renderBits & 0x80) != 0;
-                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                            p.visible = rendered || recentlyRendered;
-                        } else {
-                            p.visible = recentlyRendered;
+                        if (mesh) {
+                            float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                            uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                            bool recentlyRendered = (renderBits & 0x80) != 0;
+                            if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
+                                bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
+                                p.visible = rendered || recentlyRendered;
+                            } else {
+                                p.visible = recentlyRendered;
+                            }
                         }
                         p.aimVisible = p.visible;
                     }
 
-                    uintptr_t sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
-                    if (!sa) sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
+                    uintptr_t sa = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
+                    if (!sa && mesh) sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
                     BoneIndices bi = sa ? ResolveBones(sa) : BoneIndices{};
                     if (!bi.valid) bi = FALLBACK_BONES;
 
                     p.boneCount = 22;
-                    if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
+                    if (!mesh || !ReadSkeleton(mesh, bi, p.position, p.bones)) {
                         p.headPos = p.position;
-                        p.headPos.z += 160.0;
+                        p.headPos.z += 80.0;
                         for (int b = 0; b < 22; b++) p.bones[b] = {};
                         p.bones[0] = p.headPos;
                     } else {
@@ -4370,10 +4369,7 @@ static void UpdatePlayers() {
                     uintptr_t mesh = Read<uintptr_t>(actor + O::WDChar_CharacterMesh);
                     if (!meshValid(mesh, g_base)) {
                         mesh = Read<uintptr_t>(actor + O::WDChar_MeshFallback1);
-                        if (!meshValid(mesh, g_base)) {
-                            mesh = Read<uintptr_t>(actor + O::Char_Mesh);
-                            if (!meshValid(mesh, g_base)) continue;
-                        }
+                        if (!meshValid(mesh, g_base)) mesh = 0;
                     }
 
                     if (IsActorDummy(actor)) continue;
@@ -4570,7 +4566,7 @@ static void UpdatePlayers() {
                         p.viewRotation = Read<DRotator>(controller + O::Controller_ControlRotation);
                         p.hasViewDir = true;
                     }
-                    if (!p.hasViewDir) {
+                    if (!p.hasViewDir && mesh) {
                         uintptr_t animInst = Read<uintptr_t>(mesh + O::Skinned_AnimScriptInst);
                         if (animInst && animInst > 0x10000000 && animInst < 0x7FFFFFFFFFFF) {
                             DRotator aim = Read<DRotator>(animInst + O::AnimInst_AimRotation);
@@ -4594,27 +4590,29 @@ static void UpdatePlayers() {
                     {
                         p.visible = false;
                         p.aimVisible = false;
-                        float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
-                        uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
-                        bool recentlyRendered = (renderBits & 0x80) != 0;
-                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                            p.visible = rendered || recentlyRendered;
-                        } else {
-                            p.visible = recentlyRendered;
+                        if (mesh) {
+                            float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
+                            uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
+                            bool recentlyRendered = (renderBits & 0x80) != 0;
+                            if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
+                                bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
+                                p.visible = rendered || recentlyRendered;
+                            } else {
+                                p.visible = recentlyRendered;
+                            }
                         }
                         p.aimVisible = p.visible;
                     }
 
-                    uintptr_t sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset);
-                    if (!sa) sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
+                    uintptr_t sa = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
+                    if (!sa && mesh) sa = Read<uintptr_t>(mesh + O::Skinned_SkinnedAssetAlt);
                     BoneIndices bi = sa ? ResolveBones(sa) : BoneIndices{};
                     if (!bi.valid) bi = FALLBACK_BONES;
 
                     p.boneCount = 22;
-                    if (!ReadSkeleton(mesh, bi, p.position, p.bones)) {
+                    if (!mesh || !ReadSkeleton(mesh, bi, p.position, p.bones)) {
                         p.headPos = p.position;
-                        p.headPos.z += 160.0;
+                        p.headPos.z += 80.0;
                         for (int b = 0; b < 22; b++) p.bones[b] = {};
                         p.bones[0] = p.headPos;
                     } else {
@@ -4775,6 +4773,7 @@ static void UpdatePlayers() {
                 v.hasLocalPlayer = false;
                 v.isTeamVehicle = false;
                 if (seatComp) {
+                    // Method 1: Read occupant array from seat component
                     uintptr_t occArray = Read<uintptr_t>(seatComp + O::SeatComp_Occupants);
                     int32_t occArrCount = Read<int32_t>(seatComp + O::SeatComp_Occupants + 8);
                     if (occArray && occArrCount > 0 && occArrCount < 30) {
@@ -4799,6 +4798,60 @@ static void UpdatePlayers() {
                                     std::string occName = ReadFString(occPS + O::PS_PlayerNamePrivate);
                                     if (!occName.empty()) v.occupantNames.push_back(occName);
                                 }
+                            }
+                        }
+                    }
+                    // Try secondary occupant array (0x118) if primary returned nothing
+                    if (v.occupantCount == 0) {
+                        uintptr_t occArray2 = Read<uintptr_t>(seatComp + O::SeatComp_Occupants2);
+                        int32_t occArr2Count = Read<int32_t>(seatComp + O::SeatComp_Occupants2 + 8);
+                        if (occArray2 && occArr2Count > 0 && occArr2Count < 30) {
+                            for (int oi = 0; oi < occArr2Count; oi++) {
+                                uintptr_t opComp = Read<uintptr_t>(occArray2 + oi * 8);
+                                if (!opComp || opComp < 0x10000000) continue;
+                                uintptr_t outerPawn = Read<uintptr_t>(opComp + 0x20);
+                                if (!outerPawn || outerPawn < 0x10000000) continue;
+                                v.occupantCount++;
+                                vehicleOccupantPawns.insert(outerPawn);
+                                if (!v.isTeamVehicle) {
+                                    if (outerPawn == g_localPawn) {
+                                        v.hasLocalPlayer = true;
+                                        v.isTeamVehicle = true;
+                                    } else if (teammatePawns.count(outerPawn)) {
+                                        v.isTeamVehicle = true;
+                                    }
+                                }
+                                if (cfg.espVehicleOccupants && outerPawn != g_localPawn) {
+                                    uintptr_t occPS = Read<uintptr_t>(outerPawn + O::APawn_PlayerState);
+                                    if (occPS) {
+                                        std::string occName = ReadFString(occPS + O::PS_PlayerNamePrivate);
+                                        if (!occName.empty()) v.occupantNames.push_back(occName);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Method 2: Cross-reference known players by their VehicleOperatorComponent seat
+                    if (v.occupantCount == 0) {
+                        for (auto& pl : s_workerPlayers) {
+                            if (!pl.isValid || pl.pawn == g_localPawn) continue;
+                            uintptr_t vop = Read<uintptr_t>(pl.pawn + O::WDChar_VehicleOperator);
+                            if (!vop || vop < 0x10000000 || vop >= 0x7FFFFFFFFFFF) continue;
+                            uintptr_t plSeat = Read<uintptr_t>(vop + O::VehicleOp_CurrentSeat);
+                            if (plSeat == seatComp) {
+                                v.occupantCount++;
+                                vehicleOccupantPawns.insert(pl.pawn);
+                                if (teammatePawns.count(pl.pawn)) v.isTeamVehicle = true;
+                                if (cfg.espVehicleOccupants) {
+                                    if (!pl.name.empty()) v.occupantNames.push_back(pl.name);
+                                }
+                            }
+                        }
+                        if (g_localPawn) {
+                            uintptr_t localVop = Read<uintptr_t>(g_localPawn + O::WDChar_VehicleOperator);
+                            if (localVop && localVop > 0x10000000 && localVop < 0x7FFFFFFFFFFF) {
+                                uintptr_t localSeat = Read<uintptr_t>(localVop + O::VehicleOp_CurrentSeat);
+                                if (localSeat == seatComp) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
                             }
                         }
                     }
@@ -4994,6 +5047,56 @@ static void UpdatePlayers() {
                                 }
                             }
                         }
+                        if (v.occupantCount == 0) {
+                            uintptr_t occArray2 = Read<uintptr_t>(seatComp + O::SeatComp_Occupants2);
+                            int32_t occArr2Count = Read<int32_t>(seatComp + O::SeatComp_Occupants2 + 8);
+                            if (occArray2 && occArr2Count > 0 && occArr2Count < 30) {
+                                for (int oi = 0; oi < occArr2Count; oi++) {
+                                    uintptr_t opComp = Read<uintptr_t>(occArray2 + oi * 8);
+                                    if (!opComp || opComp < 0x10000000) continue;
+                                    uintptr_t outerPawn = Read<uintptr_t>(opComp + 0x20);
+                                    if (!outerPawn || outerPawn < 0x10000000) continue;
+                                    v.occupantCount++;
+                                    vehicleOccupantPawns.insert(outerPawn);
+                                    if (!v.isTeamVehicle) {
+                                        if (outerPawn == g_localPawn) {
+                                            v.hasLocalPlayer = true;
+                                            v.isTeamVehicle = true;
+                                        } else if (teammatePawns.count(outerPawn)) {
+                                            v.isTeamVehicle = true;
+                                        }
+                                    }
+                                    if (cfg.espVehicleOccupants && outerPawn != g_localPawn) {
+                                        uintptr_t occPS = Read<uintptr_t>(outerPawn + O::APawn_PlayerState);
+                                        if (occPS) {
+                                            std::string occName = ReadFString(occPS + O::PS_PlayerNamePrivate);
+                                            if (!occName.empty()) v.occupantNames.push_back(occName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (v.occupantCount == 0) {
+                            for (auto& pl : s_workerPlayers) {
+                                if (!pl.isValid || pl.pawn == g_localPawn) continue;
+                                uintptr_t vop = Read<uintptr_t>(pl.pawn + O::WDChar_VehicleOperator);
+                                if (!vop || vop < 0x10000000 || vop >= 0x7FFFFFFFFFFF) continue;
+                                uintptr_t plSeat = Read<uintptr_t>(vop + O::VehicleOp_CurrentSeat);
+                                if (plSeat == seatComp) {
+                                    v.occupantCount++;
+                                    vehicleOccupantPawns.insert(pl.pawn);
+                                    if (teammatePawns.count(pl.pawn)) v.isTeamVehicle = true;
+                                    if (cfg.espVehicleOccupants && !pl.name.empty()) v.occupantNames.push_back(pl.name);
+                                }
+                            }
+                            if (g_localPawn) {
+                                uintptr_t localVop = Read<uintptr_t>(g_localPawn + O::WDChar_VehicleOperator);
+                                if (localVop && localVop > 0x10000000 && localVop < 0x7FFFFFFFFFFF) {
+                                    uintptr_t localSeat = Read<uintptr_t>(localVop + O::VehicleOp_CurrentSeat);
+                                    if (localSeat == seatComp) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
+                                }
+                            }
+                        }
                     }
                     if (!v.isTeamVehicle && (g_localFactionId || g_localTeamId != 0xFF)) {
                         uintptr_t vehFcOff = O::VehicleFaction_Stationary;
@@ -5134,6 +5237,45 @@ static void UpdatePlayers() {
                                 if (!v.isTeamVehicle) {
                                     if (outerPawn == g_localPawn) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
                                     else if (teammatePawns.count(outerPawn)) v.isTeamVehicle = true;
+                                }
+                            }
+                        }
+                        if (v.occupantCount == 0) {
+                            uintptr_t occArray2 = Read<uintptr_t>(seatComp + O::SeatComp_Occupants2);
+                            int32_t occArr2Count = Read<int32_t>(seatComp + O::SeatComp_Occupants2 + 8);
+                            if (occArray2 && occArr2Count > 0 && occArr2Count < 30) {
+                                for (int oi = 0; oi < occArr2Count; oi++) {
+                                    uintptr_t opComp = Read<uintptr_t>(occArray2 + oi * 8);
+                                    if (!opComp || opComp < 0x10000000) continue;
+                                    uintptr_t outerPawn = Read<uintptr_t>(opComp + 0x20);
+                                    if (!outerPawn || outerPawn < 0x10000000) continue;
+                                    v.occupantCount++;
+                                    vehicleOccupantPawns.insert(outerPawn);
+                                    if (!v.isTeamVehicle) {
+                                        if (outerPawn == g_localPawn) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
+                                        else if (teammatePawns.count(outerPawn)) v.isTeamVehicle = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (v.occupantCount == 0) {
+                            for (auto& pl : s_workerPlayers) {
+                                if (!pl.isValid || pl.pawn == g_localPawn) continue;
+                                uintptr_t vop = Read<uintptr_t>(pl.pawn + O::WDChar_VehicleOperator);
+                                if (!vop || vop < 0x10000000 || vop >= 0x7FFFFFFFFFFF) continue;
+                                uintptr_t plSeat = Read<uintptr_t>(vop + O::VehicleOp_CurrentSeat);
+                                if (plSeat == seatComp) {
+                                    v.occupantCount++;
+                                    vehicleOccupantPawns.insert(pl.pawn);
+                                    if (teammatePawns.count(pl.pawn)) v.isTeamVehicle = true;
+                                    if (cfg.espVehicleOccupants && !pl.name.empty()) v.occupantNames.push_back(pl.name);
+                                }
+                            }
+                            if (g_localPawn) {
+                                uintptr_t localVop = Read<uintptr_t>(g_localPawn + O::WDChar_VehicleOperator);
+                                if (localVop && localVop > 0x10000000 && localVop < 0x7FFFFFFFFFFF) {
+                                    uintptr_t localSeat = Read<uintptr_t>(localVop + O::VehicleOp_CurrentSeat);
+                                    if (localSeat == seatComp) { v.hasLocalPlayer = true; v.isTeamVehicle = true; }
                                 }
                             }
                         }
@@ -6130,7 +6272,8 @@ static void RunAimbot() {
     float dx = bestTarget.x - cx;
     float dy = bestTarget.y - cy;
     float dt = ImMax(g_deltaTime, 0.001f);
-    float smoothFactor = 1.f - expf(-dt * 120.f / ImMax(cfg.smooth, 1.f));
+    float smoothFactor = 1.f - expf(-dt * 180.f / ImMax(cfg.smooth, 1.f));
+    if (smoothFactor < 0.05f) smoothFactor = 0.05f;
     accumX += dx * smoothFactor;
     accumY += dy * smoothFactor;
     LONG mx = (LONG)accumX;
