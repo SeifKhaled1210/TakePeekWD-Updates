@@ -3457,7 +3457,7 @@ static void UpdatePlayers() {
                     }
                 }
             }
-            if (!p.isDead && !p.healthValid) p.isDead = true;
+            if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
             if (p.isDead) s_persistentDeath[actor] = true;
             else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
                 if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
@@ -3693,6 +3693,7 @@ static void UpdatePlayers() {
             s_prevPositions[p.pawn] = p.position;
             p.isValid = true;
             if (p.isDead) {
+                p.visible = false; p.aimVisible = false;
                 s_deadPlayerCache[actor] = {p, tickNow};
                 if (!cfg.espShowDead) continue;
             }
@@ -3785,7 +3786,7 @@ static void UpdatePlayers() {
                         }
                     }
                 }
-                if (!p.isDead && !p.healthValid) p.isDead = true;
+                if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                 if (p.isDead) s_persistentDeath[actor] = true;
                 else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
                     if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
@@ -4002,6 +4003,7 @@ static void UpdatePlayers() {
 
                 p.isValid = true;
                 if (p.isDead) {
+                    p.visible = false; p.aimVisible = false;
                     s_deadPlayerCache[actor] = {p, tickNow};
                     if (!cfg.espShowDead) continue;
                 }
@@ -4138,7 +4140,7 @@ static void UpdatePlayers() {
                         }
                     }
 
-                    if (!p.isDead && !p.healthValid) p.isDead = true;
+                    if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                     if (p.isDead) s_persistentDeath[actor] = true;
                     else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
                         if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
@@ -4314,6 +4316,7 @@ static void UpdatePlayers() {
                     s_prevPositions[p.pawn] = p.position;
                     p.isValid = true;
                     if (p.isDead) {
+                        p.visible = false; p.aimVisible = false;
                         s_deadPlayerCache[actor] = {p, tickNow};
                         if (!cfg.espShowDead) { knownPawns2.insert(actor); continue; }
                     }
@@ -4451,7 +4454,7 @@ static void UpdatePlayers() {
                         }
                     }
 
-                    if (!p.isDead && !p.healthValid) p.isDead = true;
+                    if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                     if (p.isDead) s_persistentDeath[actor] = true;
                     else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
                         if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
@@ -4627,6 +4630,7 @@ static void UpdatePlayers() {
                     s_prevPositions[p.pawn] = p.position;
                     p.isValid = true;
                     if (p.isDead) {
+                        p.visible = false; p.aimVisible = false;
                         s_deadPlayerCache[actor] = {p, tickNow};
                         if (!cfg.espShowDead) { knownPawns3.insert(actor); continue; }
                     }
@@ -4656,7 +4660,7 @@ static void UpdatePlayers() {
 
         for (auto it = s_deadPlayerCache.begin(); it != s_deadPlayerCache.end(); ) {
             float age = std::chrono::duration<float>(tickNow - it->second.deathTime).count();
-            if (age > 120.f) { it = s_deadPlayerCache.erase(it); continue; }
+            if (age > 30.f) { it = s_deadPlayerCache.erase(it); continue; }
             if (livePawns.count(it->first)) {
                 if (age > 5.f) {
                     it = s_deadPlayerCache.erase(it);
@@ -4674,7 +4678,7 @@ static void UpdatePlayers() {
     } else {
         for (auto it = s_deadPlayerCache.begin(); it != s_deadPlayerCache.end(); ) {
             float age = std::chrono::duration<float>(tickNow - it->second.deathTime).count();
-            if (age > 120.f) it = s_deadPlayerCache.erase(it);
+            if (age > 30.f) it = s_deadPlayerCache.erase(it);
             else ++it;
         }
     }

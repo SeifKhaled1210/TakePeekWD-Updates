@@ -24,7 +24,7 @@ struct WDConfig {
     bool aimHoldMode = true;
     bool aimLock = false;
     float aimMaxDistance = 200.f;
-    bool aimPrediction = false;
+    bool aimPrediction = true;
 
     // Triggerbot
     bool triggerbot = false;

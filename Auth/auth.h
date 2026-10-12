@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 #ifndef TAKEPEEK_VERSION
-#define TAKEPEEK_VERSION "2.0.18"
+#define TAKEPEEK_VERSION "2.0.19"
 #endif
 
 // ============================================================================
