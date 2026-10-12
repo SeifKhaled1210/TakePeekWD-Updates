@@ -1134,8 +1134,8 @@ static uintptr_t ObjectAt(int index) {
     chunk &= ~0xFULL;
     if (!chunk || chunk < 0x10000000 || chunk >= 0x7FFFFFFFFFFF) return 0;
     uintptr_t item = chunk + (uint64_t)(index % OBJECTS_PER_CHUNK) * ITEM_SIZE;
-    uintptr_t obj = Read<uintptr_t>(item + 0x10);
-    if (!obj || obj < 0x10000000) obj = Read<uintptr_t>(item + 8);
+    uintptr_t obj = Read<uintptr_t>(item + 0x08);
+    if (!obj || obj < 0x10000000) obj = Read<uintptr_t>(item + 0x10);
     return (obj > 0x10000000 && obj < 0x7FFFFFFFFFFF) ? obj : 0;
 }
 
@@ -1704,9 +1704,7 @@ static uintptr_t PatternScan(uintptr_t start, size_t size,
 }
 
 static bool AutoResolveGlobals() {
-    // SDK offsets are authoritative — skip scanning entirely
-    WriteStartupLog("AutoResolve", "disabled — using SDK offsets");
-    return false;
+    WriteStartupLog("AutoResolve", "validating GWorld/GNames RVAs, scanning if stale");
 
     int32_t peOff = Read<int32_t>(g_base + 0x3C);
     uint32_t imageSize = Read<uint32_t>(g_base + peOff + 0x50);
@@ -1740,12 +1738,13 @@ static bool AutoResolveGlobals() {
         return true;
     };
 
-    // Check if the default (SDK) offset already works — skip scan if so
+    // Check if the default (SDK) GWorld offset already works
+    bool gworldValid = false;
     {
         uintptr_t val = Read<uintptr_t>(g_base + g_gworldOff);
         if (ValidateGWorld(val)) {
-            WriteStartupLog("AutoResolve", "default GWorld offset is valid, skipping scan");
-            return false;
+            WriteStartupLog("AutoResolve", "default GWorld offset is valid, skipping GWorld scan");
+            gworldValid = true;
         }
     }
 
@@ -1753,7 +1752,7 @@ static bool AutoResolveGlobals() {
     // Scan for 48 8B 05/0D/15/1D/25/2D/35/3D XX XX XX XX (mov r64, [rip+disp32])
     // Filter: resolved address must land in the upper portion of the image (.data/.rdata area)
     // Then validate the pointer chain
-    {
+    if (!gworldValid) {
         WriteStartupLog("RIP-scan", "scanning .text for mov reg,[rip+disp] resolving near expected GWorld");
         uintptr_t dataStart = imageSize / 2;
         size_t textSize = imageSize < 0x8000000 ? imageSize : 0x8000000;
@@ -1805,7 +1804,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Neighborhood scan: search ±512KB around expected GWorld offset ---
-    if (!updated) {
+    if (!gworldValid && !updated) {
         WriteStartupLog("Neighborhood scan", "searching ±512KB around expected GWorld offset");
         const size_t SCAN_RANGE = 0x80000;
         uintptr_t scanStart = (g_gworldOff > SCAN_RANGE) ? (g_gworldOff - SCAN_RANGE) : 0;
@@ -1827,7 +1826,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Full .data section scan: brute-force every 8-byte slot in upper half of image ---
-    if (!updated) {
+    if (!gworldValid && !updated) {
         WriteStartupLog("Full data scan", "scanning entire .data section for UWorld pointer");
         uintptr_t dataStart = imageSize / 2;
         if (dataStart < 0x800000) dataStart = 0x800000;
