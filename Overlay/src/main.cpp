@@ -1418,7 +1418,8 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
         std::string superName = ResolveFName(superNameIdx);
         if (superName.find("BHBaseVehicle") != std::string::npos ||
             superName.find("ModularVehicle") != std::string::npos ||
-            superName.find("WheeledVehicle") != std::string::npos) {
+            superName.find("WheeledVehicle") != std::string::npos ||
+            superName.find("SimpleHeliPawn") != std::string::npos) {
             g_vehicleClasses.insert(actorClass);
             outName = className;
             return true;
@@ -1427,17 +1428,15 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
         superClass = Read<uintptr_t>(superClass + USTRUCT_SUPER);
     }
 
-    // Seat component fallback — don't cache negative results at class level (instance-specific)
+    // Seat component fallback — only cache null (definitely absent), not bad reads
     uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
-    if (!seatComp || seatComp < 0x10000000 || seatComp >= 0x7FFFFFFFFFFF) {
+    if (!seatComp) {
         g_nonVehicleClasses.insert(actorClass);
         return false;
     }
+    if (seatComp < 0x10000000 || seatComp >= 0x7FFFFFFFFFFF) return false;
     int32_t seatOccCount = Read<int32_t>(seatComp + O::SeatComp_Occupants + 8);
-    if (seatOccCount < 0 || seatOccCount > 30) {
-        g_nonVehicleClasses.insert(actorClass);
-        return false;
-    }
+    if (seatOccCount < 0 || seatOccCount > 30) return false;
 
     g_vehicleClasses.insert(actorClass);
     outName = className;
@@ -1454,7 +1453,9 @@ static bool IsVehicleAir(const std::string& name) {
            name.find("Blackhawk") != std::string::npos ||
            name.find("Aviation") != std::string::npos ||
            name.find("Airplane") != std::string::npos ||
-           name.find("ROT_") != std::string::npos;
+           name.find("ROT_") != std::string::npos ||
+           name.find("Littlebird") != std::string::npos ||
+           name.find("LittleBird") != std::string::npos;
 }
 
 static std::string ResolveVehicleName(const std::string& className) {
@@ -6343,9 +6344,9 @@ static void RunTriggerbot() {
         }
         if (!hit) continue;
 
-        float threshold = 600.f / (p.distance + 1.f);
+        float threshold = 800.f / (p.distance + 1.f);
         if (p.distance < 20.f) threshold = 40.f;
-        if (threshold < 6.f) threshold = 6.f;
+        if (threshold < 15.f) threshold = 15.f;
         if (threshold > 50.f) threshold = 50.f;
         if (bestDist < threshold) { shouldFire = true; break; }
     }
@@ -6359,9 +6360,11 @@ static void RunTriggerbot() {
         }
         if (!s_triggerFiring) {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(now - s_triggerAcquireTime).count() >= cfg.triggerDelay) {
-                INPUT in{}; in.type = INPUT_MOUSE; in.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-                SendInput(1, &in, sizeof(INPUT));
-                s_triggerFiring = true;
+                if (!(DynAPI::pAsyncKeyState(VK_LBUTTON) & 0x8000)) {
+                    INPUT in{}; in.type = INPUT_MOUSE; in.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+                    SendInput(1, &in, sizeof(INPUT));
+                    s_triggerFiring = true;
+                }
             }
         }
     } else {
