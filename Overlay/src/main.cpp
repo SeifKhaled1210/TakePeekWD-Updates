@@ -1120,6 +1120,7 @@ static std::chrono::steady_clock::time_point g_boneCacheTime = std::chrono::stea
 static std::unordered_set<uintptr_t> g_dummyClasses;
 static std::unordered_set<uintptr_t> g_playerClasses;
 static std::unordered_set<uintptr_t> g_vehicleClasses;
+static std::unordered_set<uintptr_t> g_airVehicleClasses;
 static std::unordered_set<uintptr_t> g_nonVehicleClasses;
 static uintptr_t g_vehicleBaseClass = 0;
 static uintptr_t g_modularVehicleClass = 0;
@@ -1416,11 +1417,23 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
     for (int depth = 0; depth < 8 && superClass && superClass > 0x10000000 && superClass < 0x7FFFFFFFFFFF; depth++) {
         int32_t superNameIdx = Read<int32_t>(superClass + O::UObject_NamePrivate);
         std::string superName = ResolveFName(superNameIdx);
-        if (superName.find("BHBaseVehicle") != std::string::npos ||
-            superName.find("ModularVehicle") != std::string::npos ||
-            superName.find("WheeledVehicle") != std::string::npos ||
-            superName.find("SimpleHeliPawn") != std::string::npos) {
+        bool isVeh = superName.find("BHBaseVehicle") != std::string::npos ||
+                     superName.find("ModularVehicle") != std::string::npos ||
+                     superName.find("WheeledVehicle") != std::string::npos ||
+                     superName.find("SimpleHeliPawn") != std::string::npos;
+        if (isVeh) {
             g_vehicleClasses.insert(actorClass);
+            outName = className;
+            if (superName.find("RotaryVehicle") != std::string::npos ||
+                superName.find("AirplaneVehicle") != std::string::npos ||
+                superName.find("SimpleHeliPawn") != std::string::npos)
+                g_airVehicleClasses.insert(actorClass);
+            return true;
+        }
+        if (superName.find("RotaryVehicle") != std::string::npos ||
+            superName.find("AirplaneVehicle") != std::string::npos) {
+            g_vehicleClasses.insert(actorClass);
+            g_airVehicleClasses.insert(actorClass);
             outName = className;
             return true;
         }
@@ -1443,7 +1456,8 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
     return true;
 }
 
-static bool IsVehicleAir(const std::string& name) {
+static bool IsVehicleAir(const std::string& name, uintptr_t actorClass = 0) {
+    if (actorClass && g_airVehicleClasses.count(actorClass)) return true;
     return name.find("Helicopter") != std::string::npos ||
            name.find("Heli") != std::string::npos ||
            name.find("Rotary") != std::string::npos ||
@@ -1455,7 +1469,16 @@ static bool IsVehicleAir(const std::string& name) {
            name.find("Airplane") != std::string::npos ||
            name.find("ROT_") != std::string::npos ||
            name.find("Littlebird") != std::string::npos ||
-           name.find("LittleBird") != std::string::npos;
+           name.find("LittleBird") != std::string::npos ||
+           name.find("Osprey") != std::string::npos ||
+           name.find("Condor") != std::string::npos ||
+           name.find("MH6") != std::string::npos ||
+           name.find("UH60") != std::string::npos ||
+           name.find("AH1") != std::string::npos ||
+           name.find("MI24") != std::string::npos ||
+           name.find("Apache") != std::string::npos ||
+           name.find("Huey") != std::string::npos ||
+           name.find("Cobra") != std::string::npos;
 }
 
 static std::string ResolveVehicleName(const std::string& className) {
@@ -3311,6 +3334,8 @@ static void UpdatePlayers() {
     static std::unordered_map<uintptr_t, bool> s_persistentDeath;
     struct DeadCache { PlayerData data; std::chrono::steady_clock::time_point deathTime; };
     static std::unordered_map<uintptr_t, DeadCache> s_deadPlayerCache;
+    struct VisTrack { float prevLrt; std::chrono::steady_clock::time_point lastVisTime; };
+    static std::unordered_map<uintptr_t, VisTrack> s_visTrack;
     static uint32_t s_deadTagId = 0;
     static uint32_t s_dbnoTagId = 0;
     static uint32_t s_aliveTagId = 0;
@@ -3326,6 +3351,10 @@ static void UpdatePlayers() {
         if (localChanged || periodicRefresh) {
             s_factionCache.clear();
             s_lastCacheClear = now;
+            for (auto it = s_visTrack.begin(); it != s_visTrack.end(); ) {
+                float age = std::chrono::duration<float>(now - it->second.lastVisTime).count();
+                if (age > 5.f) it = s_visTrack.erase(it); else ++it;
+            }
         }
         s_prevLocalTeamId = g_localTeamId;
         s_prevLocalFaction = g_localFactionId;
@@ -3350,6 +3379,7 @@ static void UpdatePlayers() {
         g_dummyClasses.clear();
         g_playerClasses.clear();
         g_vehicleClasses.clear();
+        g_airVehicleClasses.clear();
         g_nonVehicleClasses.clear();
         g_droppedItemClasses.clear();
         g_mineClasses.clear();
@@ -3362,6 +3392,7 @@ static void UpdatePlayers() {
         s_factionCache.clear();
         s_persistentDeath.clear();
         s_deadPlayerCache.clear();
+        s_visTrack.clear();
         s_deadTagId = 0;
         s_dbnoTagId = 0;
         s_aliveTagId = 0;
@@ -3458,10 +3489,9 @@ static void UpdatePlayers() {
                     }
                 }
             }
-            if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
             if (p.isDead) s_persistentDeath[actor] = true;
             else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
                 else p.isDead = true;
             }
             if (p.isDead) dbgDead++;
@@ -3661,12 +3691,13 @@ static void UpdatePlayers() {
                     float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                     uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                     bool recentlyRendered = (renderBits & 0x80) != 0;
-                    if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                        bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                        p.visible = rendered || recentlyRendered;
-                    } else {
-                        p.visible = recentlyRendered;
+                    auto& vt = s_visTrack[mesh];
+                    if (lrtScreen > 1.f && lrtScreen != vt.prevLrt) {
+                        vt.prevLrt = lrtScreen;
+                        vt.lastVisTime = tickNow;
                     }
+                    float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
+                    p.visible = (visSince <= 0.25f) || recentlyRendered;
                 }
                 p.aimVisible = p.visible;
             }
@@ -3787,10 +3818,9 @@ static void UpdatePlayers() {
                         }
                     }
                 }
-                if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                 if (p.isDead) s_persistentDeath[actor] = true;
                 else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                    if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                    if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
                     else p.isDead = true;
                 }
                 p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
@@ -3973,12 +4003,13 @@ static void UpdatePlayers() {
                         float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                         uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                         bool recentlyRendered = (renderBits & 0x80) != 0;
-                        if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                            bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                            p.visible = rendered || recentlyRendered;
-                        } else {
-                            p.visible = recentlyRendered;
+                        auto& vt = s_visTrack[mesh];
+                        if (lrtScreen > 1.f && lrtScreen != vt.prevLrt) {
+                            vt.prevLrt = lrtScreen;
+                            vt.lastVisTime = tickNow;
                         }
+                        float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
+                        p.visible = (visSince <= 0.25f) || recentlyRendered;
                     }
                     p.aimVisible = p.visible;
                 }
@@ -4141,10 +4172,9 @@ static void UpdatePlayers() {
                         }
                     }
 
-                    if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                     if (p.isDead) s_persistentDeath[actor] = true;
                     else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                        if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                        if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
                         else p.isDead = true;
                     }
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
@@ -4283,12 +4313,13 @@ static void UpdatePlayers() {
                             float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                             uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                             bool recentlyRendered = (renderBits & 0x80) != 0;
-                            if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                                bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                                p.visible = rendered || recentlyRendered;
-                            } else {
-                                p.visible = recentlyRendered;
+                            auto& vt = s_visTrack[mesh];
+                            if (lrtScreen > 1.f && lrtScreen != vt.prevLrt) {
+                                vt.prevLrt = lrtScreen;
+                                vt.lastVisTime = tickNow;
                             }
+                            float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
+                            p.visible = (visSince <= 0.25f) || recentlyRendered;
                         }
                         p.aimVisible = p.visible;
                     }
@@ -4455,10 +4486,9 @@ static void UpdatePlayers() {
                         }
                     }
 
-                    if (!p.isDead && !p.healthValid && mesh) p.isDead = true;
                     if (p.isDead) s_persistentDeath[actor] = true;
                     else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                        if (p.healthValid && p.health > 0.01f && p.bleedoutState <= 1) s_persistentDeath[actor] = false;
+                        if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
                         else p.isDead = true;
                     }
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
@@ -4597,12 +4627,13 @@ static void UpdatePlayers() {
                             float lrtScreen = Read<float>(mesh + O::Skinned_LastRenderTimeOnScreen);
                             uint8_t renderBits = Read<uint8_t>(mesh + O::Skinned_RenderStateBits);
                             bool recentlyRendered = (renderBits & 0x80) != 0;
-                            if (s_workerCam.timeSeconds > 1.f && lrtScreen > 1.f && lrtScreen <= s_workerCam.timeSeconds) {
-                                bool rendered = ((double)s_workerCam.timeSeconds - (double)lrtScreen) <= 0.10;
-                                p.visible = rendered || recentlyRendered;
-                            } else {
-                                p.visible = recentlyRendered;
+                            auto& vt = s_visTrack[mesh];
+                            if (lrtScreen > 1.f && lrtScreen != vt.prevLrt) {
+                                vt.prevLrt = lrtScreen;
+                                vt.lastVisTime = tickNow;
                             }
+                            float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
+                            p.visible = (visSince <= 0.25f) || recentlyRendered;
                         }
                         p.aimVisible = p.visible;
                     }
@@ -4934,7 +4965,7 @@ static void UpdatePlayers() {
                 size_t c = className.find("_C");
                 if (c != std::string::npos) className = className.substr(0, c);
                 v.typeName = ResolveVehicleName(className);
-                v.isAir = IsVehicleAir(className);
+                v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
                 v.velocity = {};
                 v.speed = 0.f;
                 if (tickDt > 0.001f && tickDt < 2.f) {
@@ -5155,7 +5186,7 @@ static void UpdatePlayers() {
                     size_t c = className.find("_C");
                     if (c != std::string::npos) className = className.substr(0, c);
                     v.typeName = ResolveVehicleName(className);
-                    v.isAir = IsVehicleAir(className);
+                    v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
                     v.velocity = {};
                     v.speed = 0.f;
                     if (tickDt > 0.001f && tickDt < 2.f) {
@@ -5287,7 +5318,7 @@ static void UpdatePlayers() {
                     size_t bp = className.find("_BP"); if (bp != std::string::npos) className = className.substr(0, bp);
                     size_t c = className.find("_C"); if (c != std::string::npos) className = className.substr(0, c);
                     v.typeName = ResolveVehicleName(className);
-                    v.isAir = IsVehicleAir(className);
+                    v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
                     v.velocity = {}; v.speed = 0.f;
                     if (v.hasLocalPlayer) continue;
                     v.isValid = true;
