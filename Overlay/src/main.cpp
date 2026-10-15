@@ -73,10 +73,10 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM,
 namespace O {
     // --- Globals (patch-dependent — last updated Sep 30 2026) ---
     // Globals WILL change with the next game patch — pattern scan runs at startup as fallback.
-    constexpr uintptr_t GWorld   = 0x0D0E0E98;
-    constexpr uintptr_t GNames   = 0x0CE81F40;
-    constexpr uintptr_t GObjects = 0x0CF54760;
-    constexpr uintptr_t GEngine  = 0x0D0E4150;
+    constexpr uintptr_t GWorld   = 0x0D2AFC08;
+    constexpr uintptr_t GNames   = 0x0D050CC0;
+    constexpr uintptr_t GObjects = 0x0D1234E0;
+    constexpr uintptr_t GEngine  = 0x0D2B2ED0;
 
     // --- Engine functions (RVAs from game base) ---
     constexpr uintptr_t StaticFindObject = 0x18846E0;
@@ -101,8 +101,8 @@ namespace O {
     // --- AGameStateBase / UWDGameStateSession ---
     constexpr uintptr_t GS_PlayerArray = 0x2D0; // TArray<APlayerState*>
     constexpr uintptr_t GS_CachedServerFPS       = 0x444; // float — server tick rate
-    constexpr uintptr_t GS_bServerCheatsEnabled   = 0x5A0; // bool
-    constexpr uintptr_t GS_bAdminModeEnabled      = 0x5A1; // bool
+    constexpr uintptr_t GS_bServerCheatsEnabled   = 0x5A8; // bool (Season 2 SDK)
+    constexpr uintptr_t GS_bAdminModeEnabled      = 0x5A9; // bool (Season 2 SDK)
 
     // --- ULevel ---
     constexpr uintptr_t ULevel_Actors     = 0xA0;   // TArray<AActor*>: Data at +0x0, Num at +0x8
@@ -154,7 +154,7 @@ namespace O {
     constexpr uintptr_t PS_CompressedPing    = 0x2C0;  // uint8
     constexpr uintptr_t PS_bIsABot           = 0x2C2;  // bool (bitfield byte — bIsABot)
     constexpr uintptr_t PS_PawnPrivate       = 0x330;
-    constexpr uintptr_t PS_PlayerNamePrivate = 0x350;  // FString (SDK: 0x308 is SavedNetworkAddress, 0x350 is PlayerNamePrivate)
+    constexpr uintptr_t PS_PlayerNamePrivate = 0x430;  // FString — AWDPlayerState PublicName (Season 2: display name at 0x430)
 
     // --- USceneComponent ---
     constexpr uintptr_t Scene_RelativeLocation = 0x168; // FVector (3 x double)
@@ -173,8 +173,8 @@ namespace O {
     constexpr uintptr_t CMC_MaxWalkSpeed       = 0x2A8; // float
     constexpr uintptr_t CMC_MaxWalkSpeedCrouched = 0x2AC; // float
 
-    // --- ABHMoverPawn (parent of AWDMoverCharacter, deob confirmed) ---
-    constexpr uintptr_t BHPawn_MoverComponent  = 0x378; // UBHPawnMoverComponent* (Mover plugin, NOT UCharacterMovementComponent)
+    // --- ABHMoverPawn (parent of AWDMoverCharacter, Season 2 SDK) ---
+    constexpr uintptr_t BHPawn_MoverComponent  = 0x388; // UBHPawnMoverComponent* (Mover plugin, NOT UCharacterMovementComponent)
 
     // --- UWDCharacterAnimInstance (stance booleans, deob confirmed) ---
     constexpr uintptr_t AnimInst_SprintOrTacSprint  = 0xC3A; // bool — bSprintOrTacSprint
@@ -182,14 +182,14 @@ namespace O {
     constexpr uintptr_t AnimInst_StanceCrouch       = 0xC45; // bool — IsActiveStanceCrouch
     constexpr uintptr_t AnimInst_StanceStand        = 0xC46; // bool — IsActiveStanceStand
 
-    // --- AWDMoverCharacter (game-specific, Sep 14 SDK) ---
-    constexpr uintptr_t WDChar_CharacterMesh    = 0x390; // UBHSkeletalMeshComponentBudgeted* (in parent ABHMoverPawn)
-    constexpr uintptr_t WDChar_MeshFallback1    = 0x578; // Fallback mesh (UC post #631)
-    // 0xB98 = FirstPersonBodyMesh, 0xBA0 = adjacent FP data — NOT valid for third-person ESP
-    constexpr uintptr_t WDChar_VitalityComponent = 0x738; // WDCharacterVitalityComponent*
-    constexpr uintptr_t WDChar_InventoryComponent = 0x748; // UWDPlayerInventoryComponent*
-    constexpr uintptr_t WDChar_VehicleOperator   = 0x758; // UWDVehicleOperatorComponent*
-    constexpr uintptr_t WDChar_CameraManagerRef  = 0xB48; // APlayerCameraManager* (direct ref)
+    // --- AWDMoverCharacter (Season 2 SDK, +0x10 uniform shift) ---
+    constexpr uintptr_t WDChar_CharacterMesh    = 0x3A0; // UBHSkeletalMeshComponentBudgeted* (in parent ABHMoverPawn)
+    constexpr uintptr_t WDChar_MeshFallback1    = 0x588; // Fallback mesh (UC post #631)
+    // 0xBA8 = FirstPersonBodyMesh, 0xBB0 = adjacent FP data — NOT valid for third-person ESP
+    constexpr uintptr_t WDChar_VitalityComponent = 0x748; // WDCharacterVitalityComponent*
+    constexpr uintptr_t WDChar_InventoryComponent = 0x758; // UWDPlayerInventoryComponent*
+    constexpr uintptr_t WDChar_VehicleOperator   = 0x768; // UWDVehicleOperatorComponent*
+    constexpr uintptr_t WDChar_CameraManagerRef  = 0xB78; // APlayerCameraManager* (Season 2: +0x30)
 
     // --- UWDVitalityComponent (new SDK confirmed) ---
     // 0x130 = BaseHealth (float) — NOT current health! It's the initial/max base value.
@@ -209,19 +209,19 @@ namespace O {
     constexpr int       AttrRepData_Stride       = 0x38;  // sizeof(FBHGameplayAttributeRepData)
 
     // --- Faction / Team / Squad ---
-    constexpr uintptr_t PS_FactionComponent = 0x548; // WDFactionComponent* (on PlayerState)
+    constexpr uintptr_t PS_FactionComponent = 0x5A0; // WDFactionComponent* (Season 2 SDK)
     constexpr uintptr_t Faction_Tag         = 0x100; // FGameplayTag (initial/design-time)
     constexpr uintptr_t Faction_TagRep      = 0x110; // FGameplayTag (replicated runtime — prefer this for remote players)
     constexpr uintptr_t Faction_Object      = 0x128; // AWDFaction* — resolved faction actor
-    constexpr uintptr_t PS_SquadComponent   = 0x550; // WDSquadComponent* (on PlayerState)
-    constexpr uintptr_t PS_VitalityStateTag = 0x61C; // FGameplayTag — alive/downed/dead on PlayerState (+0x58 shift)
-    constexpr uintptr_t PS_VitalityStateTag2 = 0x64C; // FGameplayTag — second vitality tag (DMA ref: 0x5F4 + 0x58 shift)
-    constexpr uintptr_t PS_MatchStats       = 0x580; // TArray<FWDMatchStat> — K/D/etc (+0x58 shift)
+    constexpr uintptr_t PS_SquadComponent   = 0x5A8; // WDSquadComponent* (Season 2 SDK)
+    constexpr uintptr_t PS_VitalityStateTag = 0x674; // FGameplayTag — alive/downed/dead (Season 2 SDK)
+    constexpr uintptr_t PS_VitalityStateTag2 = 0x680; // FGameplayTag — OnDeathChangeFactionTag (Season 2 SDK)
+    constexpr uintptr_t PS_MatchStats       = 0x5D8; // TArray<FWDMatchStat> — K/D/etc (Season 2 SDK)
 
     // --- AWDFaction (faction actor data) ---
     constexpr uintptr_t Faction_Score       = 0x2B8; // int32 — faction score
     constexpr uintptr_t Faction_PlayerCount = 0x2BC; // int32
-    constexpr uintptr_t Faction_Data        = 0x2C8; // UWDFactionData*
+    constexpr uintptr_t Faction_Data        = 0x2D0; // UWDFactionData* (Season 2 SDK)
 
     // --- UWDFactionData (data asset — singleton per faction) ---
     constexpr uintptr_t FactionData_Tag     = 0x30;  // FGameplayTag
@@ -247,11 +247,11 @@ namespace O {
     constexpr uintptr_t Skinned_RenderStateBits = 0x818; // bRecentlyRendered flag byte
     constexpr uintptr_t Skinned_AnimScriptInst = 0x958; // UAnimInstance*
 
-    // --- AWDMoverCharacter extended (new SDK + Sep 13 dump) ---
-    constexpr uintptr_t WDChar_GameplayEffectComp = 0x730; // UBHGameplayEffectComponent*
-    constexpr uintptr_t WDChar_WeaponBehavior  = 0x770; // UWDWeaponBehaviorComponent*
-    constexpr uintptr_t WDChar_Invincible      = 0x7F3; // bool (last bool before VitalityState)
-    constexpr uintptr_t WDChar_DeathState      = 0x7F4; // FWDCharacterVitalityState (0x28 bytes)
+    // --- AWDMoverCharacter extended (Season 2 SDK) ---
+    constexpr uintptr_t WDChar_GameplayEffectComp = 0x740; // UBHGameplayEffectComponent*
+    constexpr uintptr_t WDChar_WeaponBehavior  = 0x780; // UWDWeaponBehaviorComponent*
+    constexpr uintptr_t WDChar_Invincible      = 0x803; // bool (bInvincible)
+    constexpr uintptr_t WDChar_DeathState      = 0x804; // FWDCharacterVitalityState (0x28 bytes)
     // FWDCharacterVitalityState layout (0x28, SDK):
     //   +0x00 = InstigatingPlayerController (TWeakObjectPtr, 8)
     //   +0x08 = VitalityTag (FGameplayTag, 8)
@@ -263,9 +263,9 @@ namespace O {
     //   +0x1E = bool
     //   +0x1F = bool
     constexpr uintptr_t DeathState_BleedoutState = 0x1C;
-    constexpr uintptr_t DeathState_GiveUpTime    = 0x18;
-    constexpr uintptr_t DeathState_FallToCrit    = 0x10;
-    constexpr uintptr_t WDChar_AimingAlpha     = 0x81D; // char — OnRep_AimingAlpha (0x81C is a different bool)
+    constexpr uintptr_t DeathState_GiveUpTime    = 0x20; // Season 2: CurrentGiveUpTime moved
+    constexpr uintptr_t DeathState_FallToCrit    = 0x14; // Season 2: FallToCriticalAlpha
+    constexpr uintptr_t WDChar_AimingAlpha     = 0x82D; // char — OnRep_AimingAlpha (Season 2 SDK)
 
     // --- UAnimInstance (aim rotation from AnimScriptInstance) ---
     constexpr uintptr_t AnimInst_AimRotation   = 0x6A0; // FRotator — CommonAimingData+AimRotation
@@ -301,13 +301,13 @@ namespace O {
     constexpr uintptr_t WeaponStats_InitialBulletSpeed = 0xDD8; // float — InitialBulletSpeed
     constexpr uintptr_t WeaponStats_IronSightsAimTime = 0x18C; // float — IronSightsAimTime
 
-    // --- Admin / Spectator Detection (UC page 25) ---
-    constexpr uintptr_t PS_IsDeveloper = 0x619; // bool on PlayerState (+0x58 shift)
-    constexpr uintptr_t PS_IsAdmin     = 0x61A; // bool on PlayerState (+0x58 shift)
+    // --- Admin / Spectator Detection (Season 2: dev/admin via IdentityTags at 0x488) ---
+    constexpr uintptr_t PS_IsDeveloper = 0x671; // bool — bIsReadyForMatch area (Season 2: no explicit IsDeveloper)
+    constexpr uintptr_t PS_IsAdmin     = 0x672; // bool — (Season 2: admin via IdentityTags, not direct bool)
     constexpr uintptr_t PC_SpectatorPawn = 0x6C8; // ASpectatorPawn* on PlayerController
 
     // --- Vehicle Damage Model (UC page 26) ---
-    constexpr uintptr_t Vehicle_DamageModel = 0x788; // UBHVehicleDamageModelComponent*
+    constexpr uintptr_t Vehicle_DamageModel = 0x798; // UBHVehicleDamageModelComponent* (Season 2 SDK)
 
     // --- USceneComponent attachment ---
     constexpr uintptr_t Scene_AttachParent = 0xF0; // USceneComponent* — parent component if attached (SDK 0xF0)
@@ -342,40 +342,40 @@ namespace O {
     constexpr uintptr_t ProjData_TypicalSpeed      = 0x234; // 0x38 + 0x1FC
 
     // --- Vehicle ---
-    constexpr uintptr_t Vehicle_VehicleVariant = 0x3A8; // UModularVehicleVariant*
-    constexpr uintptr_t Vehicle_SeatComponent  = 0x748; // UBHVehicleSeatComponent*
-    constexpr uintptr_t Vehicle_Mesh           = 0x750; // USkeletalMeshComponentVehicle*
-    constexpr uintptr_t Vehicle_Config         = 0xA28; // UBHBaseVehicleConfigDataAsset*
+    constexpr uintptr_t Vehicle_VehicleVariant = 0x3A8; // UModularVehicleVariant* (unchanged)
+    constexpr uintptr_t Vehicle_SeatComponent  = 0x758; // UBHVehicleSeatComponent* (Season 2 SDK)
+    constexpr uintptr_t Vehicle_Mesh           = 0x760; // USkeletalMeshComponentVehicle* (Season 2 SDK)
+    constexpr uintptr_t Vehicle_Config         = 0xA78; // UBHBaseVehicleConfigDataAsset* (Season 2 SDK)
     constexpr uintptr_t VehicleVariant_Id      = 0x34;  // FGameplayTag
     constexpr uintptr_t SeatComp_Occupants     = 0x108; // TArray<UBHVehicleOperatorComponent*> (primary)
     constexpr uintptr_t SeatComp_Occupants2    = 0x118; // TArray<UBHVehicleOperatorComponent*> (secondary)
     constexpr uintptr_t VehicleOp_CurrentSeat  = 0x188; // FMOperatorSeatInfo (SDK: 0x0188)
     constexpr uintptr_t VehicleOp_ReplicatedState = 0x198; // FMOperatorReplicatedState (SDK: 0x0198)
-    constexpr uintptr_t Vehicle_EngineRunning  = 0x830; // bIsEngineRunning (SDK: 0x0830)
-    constexpr uintptr_t Vehicle_HornActive     = 0x831; // bIsHornActive (SDK: 0x0831)
-    constexpr uintptr_t Vehicle_Destroyed      = 0x832; // bIsVehicleDestroyed (SDK: 0x0832)
-    constexpr uintptr_t VehicleFaction_Stationary = 0x0AC8;
-    constexpr uintptr_t VehicleFaction_Airplane   = 0x0BA8;
-    constexpr uintptr_t VehicleFaction_Rotary     = 0x0B88;
-    constexpr uintptr_t VehicleFaction_Tracked    = 0x0BE8;
-    constexpr uintptr_t VehicleFaction_Wheeled    = 0x0BD8;
+    constexpr uintptr_t Vehicle_EngineRunning  = 0x889; // bIsEngineRunning (Season 2 SDK)
+    constexpr uintptr_t Vehicle_HornActive     = 0x918; // bIsHornActive (Season 2 SDK)
+    constexpr uintptr_t Vehicle_Destroyed      = 0x878; // bIsVehicleDestroyed (Season 2 SDK)
+    constexpr uintptr_t VehicleFaction_Stationary = 0x0B18;
+    constexpr uintptr_t VehicleFaction_Airplane   = 0x0BF8;
+    constexpr uintptr_t VehicleFaction_Rotary     = 0x0BD8;
+    constexpr uintptr_t VehicleFaction_Tracked    = 0x0C38;
+    constexpr uintptr_t VehicleFaction_Wheeled    = 0x0C28;
 
     // --- View direction (AController — SDK confirmed at 0x330) ---
     constexpr uintptr_t Controller_ControlRotation = 0x330; // FRotator (3 doubles: pitch, yaw, roll)
 
-    // --- Remote player view direction (UBHMoverPawn — SDK confirmed) ---
-    constexpr uintptr_t BHPawn_SmoothedRemoteViewPitch = 0x3A8; // float — replicated pitch for remote players
-    constexpr uintptr_t BHPawn_RemoteViewYaw           = 0x3D0; // uint16 — compressed replicated yaw
+    // --- Remote player view direction (ABHMoverPawn — Season 2 SDK) ---
+    constexpr uintptr_t BHPawn_SmoothedRemoteViewPitch = 0x3B8; // float — replicated pitch for remote players
+    constexpr uintptr_t BHPawn_RemoteViewYaw           = 0x3E0; // uint16 — compressed replicated yaw
 
-    // --- Player Clan Tag (UWDPlayerState — SDK confirmed) ---
-    constexpr uintptr_t PS_PlayerClanTag = 0x408; // FString — player's clan tag
+    // --- Player Clan Tag (AWDPlayerState — Season 2 SDK) ---
+    constexpr uintptr_t PS_PlayerClanTag = 0x410; // FString — player's clan tag
 
-    // --- Inventory / Equipment ---
-    constexpr uintptr_t WDChar_InventoryComp = 0x748; // UWDPlayerInventoryComponent*
-    constexpr uintptr_t InvComp_HeldItem     = 0x8C8; // ABHItem* — currently held weapon/item
-    constexpr uintptr_t InvComp_ActiveItem   = 0xA78; // ABHItem* — active weapon fallback
+    // --- Inventory / Equipment (Season 2 SDK) ---
+    constexpr uintptr_t WDChar_InventoryComp = 0x758; // UWDPlayerInventoryComponent*
+    constexpr uintptr_t InvComp_HeldItem     = 0x8E0; // ABHItem* — currently held weapon/item
+    constexpr uintptr_t InvComp_ActiveItem   = 0xA78; // QuickSlotDefinitions area (Season 2: resolved via GetActiveItem())
     constexpr uintptr_t BHItem_ItemId        = 0x328; // FGameplayTag — weapon/item identifier
-    constexpr uintptr_t InvComp_ArmorArray   = 0x818; // TArray<FWDReplicatedArmorDurability>
+    constexpr uintptr_t InvComp_ArmorArray   = 0x830; // TArray<FWDReplicatedArmorDurability>
     constexpr int       ArmorEntry_Stride    = 0x14;  // sizeof(FWDReplicatedArmorDurability)
     constexpr uintptr_t ArmorEntry_Durability = 0x8;  // float — current durability
 
@@ -396,7 +396,7 @@ namespace O {
     constexpr uintptr_t RepProj_NetId          = 0x58; // int32_t
 
     // --- Dropped Items / Lootables ---
-    constexpr uintptr_t DroppedItem_ItemTag = 0x33C; // FGameplayTag
+    constexpr uintptr_t DroppedItem_ItemTag = 0x350; // FGameplayTag (Season 2 SDK)
     constexpr uintptr_t Lootable_Hidden     = 0x300; // bool — bIsHiddenInGame
     constexpr uintptr_t Lootable_SpawnData  = 0x308; // SpawnedItemData
 
@@ -4693,7 +4693,7 @@ static void UpdatePlayers() {
 
     // Resolve vehicle base classes from GObjects (DMA ref indices, refreshed each scan)
     if (!g_vehicleBaseClass || !g_modularVehicleClass) {
-        for (int idx : {3650, 3651, 3649, 3652, 3648}) {
+        for (int idx : {3605, 3606, 3604, 3607, 3603}) {
             uintptr_t candidate = ObjectAt(idx);
             if (!candidate) continue;
             int32_t ni = Read<int32_t>(candidate + O::UObject_NamePrivate);
@@ -4703,7 +4703,7 @@ static void UpdatePlayers() {
                 break;
             }
         }
-        for (int idx : {3346, 3347, 3345, 3348, 3344}) {
+        for (int idx : {3301, 3302, 3300, 3303, 3299}) {
             uintptr_t candidate = ObjectAt(idx);
             if (!candidate) continue;
             int32_t ni = Read<int32_t>(candidate + O::UObject_NamePrivate);
