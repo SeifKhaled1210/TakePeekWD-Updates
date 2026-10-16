@@ -73,7 +73,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM,
 namespace O {
     // --- Globals (patch-dependent — last updated Sep 30 2026) ---
     // Globals WILL change with the next game patch — pattern scan runs at startup as fallback.
-    constexpr uintptr_t GWorld   = 0x0D2AFC08;
+    constexpr uintptr_t GWorld   = 0x0D1533F0;
     constexpr uintptr_t GNames   = 0x0D050CC0;
     constexpr uintptr_t GObjects = 0x0D1234E0;
     constexpr uintptr_t GEngine  = 0x0D2B2ED0;
