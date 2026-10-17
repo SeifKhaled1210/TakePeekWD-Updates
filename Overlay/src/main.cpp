@@ -3273,32 +3273,88 @@ static void DiscoverLevelsOffset(uintptr_t gworld, uintptr_t persistentLevel) {
     }
 }
 
+static bool ValidateAsGameState(uintptr_t candidate) {
+    if (!candidate || candidate < 0x10000000 || candidate >= 0x7FFFFFFFFFFF) return false;
+    uintptr_t arrData = Read<uintptr_t>(candidate + O::GS_PlayerArray);
+    int32_t arrCount = Read<int32_t>(candidate + O::GS_PlayerArray + 8);
+    return arrData > 0x10000000 && arrData < 0x7FFFFFFFFFFF && arrCount >= 0 && arrCount <= 200;
+}
+
 static void FindGameState(uintptr_t gworld) {
     g_gameState = 0;
     g_playerArrayOffset = 0;
     g_gameStateScanDone = true;
 
+    // Method 1: Direct offset read
     uintptr_t gs = Read<uintptr_t>(gworld + O::UWorld_GameState);
-    if (!gs || gs < 0x10000000 || gs >= 0x7FFFFFFFFFFF) {
-        WriteStartupLog("GameState", "UWorld+0x1B0 is NULL — world not ready");
-        return;
-    }
-
-    // Validate it's actually a GameState by checking PlayerArray
-    uintptr_t arrData = Read<uintptr_t>(gs + O::GS_PlayerArray);
-    int32_t arrCount = Read<int32_t>(gs + O::GS_PlayerArray + 8);
-
-    if (arrData > 0x10000000 && arrData < 0x7FFFFFFFFFFF && arrCount >= 0 && arrCount <= 200) {
+    if (gs && gs > 0x10000000 && gs < 0x7FFFFFFFFFFF && ValidateAsGameState(gs)) {
         g_gameState = gs;
         g_playerArrayOffset = O::GS_PlayerArray;
         char buf[128];
-        sprintf_s(buf, "gs=0x%llX playerArray=%d", (unsigned long long)gs, arrCount);
+        sprintf_s(buf, "gs=0x%llX PA=%d (direct)", (unsigned long long)gs,
+            Read<int32_t>(gs + O::GS_PlayerArray + 8));
         WriteStartupLog("GameStateFound", buf);
-    } else {
+        return;
+    }
+
+    {
         char buf[128];
-        sprintf_s(buf, "gs=0x%llX arrData=0x%llX cnt=%d — invalid", (unsigned long long)gs, (unsigned long long)arrData, arrCount);
+        sprintf_s(buf, "direct @0x%X raw=0x%llX — trying scan",
+            (unsigned)O::UWorld_GameState, (unsigned long long)gs);
         WriteStartupLog("GameState", buf);
     }
+
+    // Method 2: Neighborhood scan (handles small offset shifts from hotfixes)
+    for (int delta = -0x28; delta <= 0x28; delta += 8) {
+        if (delta == 0) continue;
+        uintptr_t off = O::UWorld_GameState + delta;
+        uintptr_t candidate = Read<uintptr_t>(gworld + off);
+        if (ValidateAsGameState(candidate)) {
+            g_gameState = candidate;
+            g_playerArrayOffset = O::GS_PlayerArray;
+            char buf[128];
+            sprintf_s(buf, "gs=0x%llX PA=%d (neighbor +0x%X, delta=%+d)",
+                (unsigned long long)candidate,
+                Read<int32_t>(candidate + O::GS_PlayerArray + 8),
+                (unsigned)off, delta);
+            WriteStartupLog("GameStateFound", buf);
+            return;
+        }
+    }
+
+    // Method 3: Actor scan — find GameState actor in PersistentLevel
+    uintptr_t level = Read<uintptr_t>(gworld + O::UWorld_PersistentLevel);
+    if (level) {
+        uintptr_t actorsData = Read<uintptr_t>(level + O::ULevel_Actors);
+        int32_t actorsCount = Read<int32_t>(level + O::ULevel_Actors + 8);
+        if (actorsData && actorsCount > 0 && actorsCount < 10000) {
+            int limit = (actorsCount < 300) ? actorsCount : 300;
+            for (int i = 0; i < limit; i++) {
+                uintptr_t actor = Read<uintptr_t>(actorsData + (uint64_t)i * 8);
+                if (!actor || actor < 0x10000000 || actor >= 0x7FFFFFFFFFFF) continue;
+                uintptr_t actorClass = Read<uintptr_t>(actor + O::UObject_ClassPrivate);
+                if (!actorClass || actorClass < 0x10000000 || actorClass >= 0x7FFFFFFFFFFF) continue;
+                int32_t nameIdx = Read<int32_t>(actorClass + O::UObject_NamePrivate);
+                std::string cn = ResolveFName(nameIdx);
+                if (cn.find("GameState") == std::string::npos) continue;
+                if (cn.find("Frontend") != std::string::npos) continue;
+                if (cn.find("Component") != std::string::npos) continue;
+                if (ValidateAsGameState(actor)) {
+                    g_gameState = actor;
+                    g_playerArrayOffset = O::GS_PlayerArray;
+                    char buf[192];
+                    sprintf_s(buf, "gs=0x%llX PA=%d (actor scan: %s)",
+                        (unsigned long long)actor,
+                        Read<int32_t>(actor + O::GS_PlayerArray + 8),
+                        cn.c_str());
+                    WriteStartupLog("GameStateFound", buf);
+                    return;
+                }
+            }
+        }
+    }
+
+    WriteStartupLog("GameState", "all methods failed — world not ready");
 }
 
 static void UpdatePlayers() {
@@ -6665,8 +6721,11 @@ static void DrawDebugHUD() {
     statusLine("RVAs:", buf, gwOffDefault && gnOffDefault);
 
     uintptr_t rawGS = gworld ? Read<uintptr_t>(gworld + O::UWorld_GameState) : 0;
-    snprintf(buf, sizeof(buf), "GS@1B0=0x%llX", (unsigned long long)rawGS);
-    statusLine("RawGS:", buf, rawGS > 0x10000000);
+    uintptr_t raw1A8 = gworld ? Read<uintptr_t>(gworld + 0x1A8) : 0;
+    uintptr_t raw1B8 = gworld ? Read<uintptr_t>(gworld + 0x1B8) : 0;
+    snprintf(buf, sizeof(buf), "1A8=%llX 1B0=%llX 1B8=%llX",
+        (unsigned long long)raw1A8, (unsigned long long)rawGS, (unsigned long long)raw1B8);
+    statusLine("RawGS:", buf, g_gameState != 0);
 
     dl->AddText(ImVec2(x + 6, y + 8), IM_COL32(120,120,140,180), "F3=HUD  F4=Dump offsets");
 }
