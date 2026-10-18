@@ -1446,15 +1446,18 @@ static bool IsVehicleActor(uintptr_t actor, std::string& outName) {
         superClass = Read<uintptr_t>(superClass + USTRUCT_SUPER);
     }
 
-    // Seat component fallback — only cache null (definitely absent), not bad reads
-    uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
-    if (!seatComp) {
-        g_nonVehicleClasses.insert(actorClass);
-        return false;
+    // Seat component fallback — never cache as non-vehicle here (offset 0x710 is an estimate)
+    for (uintptr_t off : {(uintptr_t)O::Vehicle_SeatComponent, (uintptr_t)0x718, (uintptr_t)0x720, (uintptr_t)0x700}) {
+        uintptr_t seatComp = Read<uintptr_t>(actor + off);
+        if (!seatComp || seatComp < 0x10000000 || seatComp >= 0x7FFFFFFFFFFF) continue;
+        int32_t seatOccCount = Read<int32_t>(seatComp + O::SeatComp_Occupants + 8);
+        if (seatOccCount >= 0 && seatOccCount <= 30) {
+            g_vehicleClasses.insert(actorClass);
+            outName = className;
+            return true;
+        }
     }
-    if (seatComp < 0x10000000 || seatComp >= 0x7FFFFFFFFFFF) return false;
-    int32_t seatOccCount = Read<int32_t>(seatComp + O::SeatComp_Occupants + 8);
-    if (seatOccCount < 0 || seatOccCount > 30) return false;
+    return false;
 
     g_vehicleClasses.insert(actorClass);
     outName = className;
@@ -3786,9 +3789,9 @@ static void UpdatePlayers() {
                         vt.lastVisTime = tickNow;
                     }
                     float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                    p.visible = (visSince <= 0.25f) || recentlyRendered;
+                    p.visible = (visSince <= 0.15f) || recentlyRendered;
+                    p.aimVisible = recentlyRendered && (visSince <= 0.05f);
                 }
-                p.aimVisible = p.visible;
             }
 
             dbgOnScreen++;
@@ -4098,9 +4101,9 @@ static void UpdatePlayers() {
                             vt.lastVisTime = tickNow;
                         }
                         float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                        p.visible = (visSince <= 0.25f) || recentlyRendered;
+                        p.visible = (visSince <= 0.15f) || recentlyRendered;
+                        p.aimVisible = recentlyRendered && (visSince <= 0.05f);
                     }
-                    p.aimVisible = p.visible;
                 }
 
                 p.boneCount = 22;
@@ -4408,9 +4411,9 @@ static void UpdatePlayers() {
                                 vt.lastVisTime = tickNow;
                             }
                             float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                            p.visible = (visSince <= 0.25f) || recentlyRendered;
+                            p.visible = (visSince <= 0.15f) || recentlyRendered;
+                            p.aimVisible = recentlyRendered && (visSince <= 0.05f);
                         }
-                        p.aimVisible = p.visible;
                     }
 
                     uintptr_t sa = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
@@ -4722,9 +4725,9 @@ static void UpdatePlayers() {
                                 vt.lastVisTime = tickNow;
                             }
                             float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                            p.visible = (visSince <= 0.25f) || recentlyRendered;
+                            p.visible = (visSince <= 0.15f) || recentlyRendered;
+                            p.aimVisible = recentlyRendered && (visSince <= 0.05f);
                         }
-                        p.aimVisible = p.visible;
                     }
 
                     uintptr_t sa = mesh ? Read<uintptr_t>(mesh + O::Skinned_SkinnedAsset) : 0;
@@ -4885,7 +4888,7 @@ static void UpdatePlayers() {
                 }
                 if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
                 v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
-                if (v.distance > cfg.vehicleMaxDistance) continue;
+                if (v.distance > cfg.vehicleMaxDistance * 1.5f) continue;
 
                 uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
                 v.occupantCount = 0;
@@ -5055,6 +5058,7 @@ static void UpdatePlayers() {
                 if (c != std::string::npos) className = className.substr(0, c);
                 v.typeName = ResolveVehicleName(className);
                 v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
+                if (!v.isAir && v.distance > cfg.vehicleMaxDistance) continue;
                 v.velocity = {};
                 v.speed = 0.f;
                 if (tickDt > 0.001f && tickDt < 2.f) {
@@ -5133,7 +5137,7 @@ static void UpdatePlayers() {
                     }
                     if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
                     v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
-                    if (v.distance > cfg.vehicleMaxDistance) continue;
+                    if (v.distance > cfg.vehicleMaxDistance * 1.5f) continue;
 
                     uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
                     v.occupantCount = 0;
@@ -5276,6 +5280,7 @@ static void UpdatePlayers() {
                     if (c != std::string::npos) className = className.substr(0, c);
                     v.typeName = ResolveVehicleName(className);
                     v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
+                    if (!v.isAir && v.distance > cfg.vehicleMaxDistance) continue;
                     v.velocity = {};
                     v.speed = 0.f;
                     if (tickDt > 0.001f && tickDt < 2.f) {
@@ -5339,7 +5344,7 @@ static void UpdatePlayers() {
                     }
                     if (v.position.x == 0.0 && v.position.y == 0.0 && v.position.z == 0.0) continue;
                     v.distance = (float)((v.position - s_workerCam.location).length() / 100.0);
-                    if (v.distance > cfg.vehicleMaxDistance) continue;
+                    if (v.distance > cfg.vehicleMaxDistance * 1.5f) continue;
                     uintptr_t seatComp = Read<uintptr_t>(actor + O::Vehicle_SeatComponent);
                     v.occupantCount = 0;
                     v.isDestroyed = Read<uint8_t>(actor + O::Vehicle_Destroyed) != 0;
@@ -5408,6 +5413,7 @@ static void UpdatePlayers() {
                     size_t c = className.find("_C"); if (c != std::string::npos) className = className.substr(0, c);
                     v.typeName = ResolveVehicleName(className);
                     v.isAir = IsVehicleAir(className, Read<uintptr_t>(actor + O::UObject_ClassPrivate));
+                    if (!v.isAir && v.distance > cfg.vehicleMaxDistance) continue;
                     v.velocity = {}; v.speed = 0.f;
                     if (v.hasLocalPlayer) continue;
                     v.isValid = true;

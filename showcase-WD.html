@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TakePeek WarDogs - Features Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0a12;
+  --bg-body: #0d0d18;
+  --bg-card: #12121e;
+  --bg-card-hover: #16162a;
+  --border: #1e1e34;
+  --accent: #2db45a;
+  --accent-dim: rgba(45, 180, 90, 0.15);
+  --accent-glow: rgba(45, 180, 90, 0.25);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.15);
+  --text-primary: #e8e8f0;
+  --text-secondary: #9898b0;
+  --text-muted: #686888;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --orange: #f97316;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── Hero ─────────────────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 80px 0 60px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 600px 400px at 50% 0%, rgba(45,180,90,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 30% 20%, rgba(124,58,237,0.06) 0%, transparent 70%),
+    var(--bg-deep);
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.hero-brand h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--text-primary) 40%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.badge-wd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--purple), var(--accent));
+  border-radius: 6px;
+  transform: translateY(-6px);
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.hero-version {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 32px;
+}
+.hero-version span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: border-color 0.25s;
+}
+.stat-pill:hover { border-color: var(--accent); }
+.stat-pill .stat-icon {
+  font-size: 1rem;
+}
+.stat-pill .stat-value {
+  color: var(--accent);
+}
+
+/* ── Section heading ──────────────────────────────── */
+.section-heading {
+  text-align: center;
+  padding: 56px 0 36px;
+}
+.section-heading h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.section-heading h2 .accent { color: var(--accent); }
+.section-heading p {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ── Card grid ────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  padding-bottom: 24px;
+}
+@media (max-width: 400px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(45,180,90,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.card:hover::before { opacity: 1; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.card-icon.green  { background: var(--accent-dim); }
+.card-icon.purple { background: var(--purple-dim); }
+.card-icon.blue   { background: rgba(59,130,246,0.15); }
+.card-icon.orange { background: rgba(249,115,22,0.15); }
+.card-icon.red    { background: rgba(239,68,68,0.12); }
+.card-icon.yellow { background: rgba(234,179,8,0.12); }
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.card-title .wip {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(234,179,8,0.15);
+  color: var(--yellow);
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.card-desc {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  line-height: 1.55;
+}
+
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.feature-list li::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 100px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  letter-spacing: 0.3px;
+}
+.tag.purple { background: var(--purple-dim); color: var(--purple); }
+.tag.blue   { background: rgba(59,130,246,0.12); color: var(--blue); }
+.tag.orange { background: rgba(249,115,22,0.12); color: var(--orange); }
+.tag.yellow { background: rgba(234,179,8,0.1); color: var(--yellow); }
+
+/* ── Color swatches ───────────────────────────────── */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.swatch-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Footer ───────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+  padding: 48px 0 40px;
+  background: var(--bg-deep);
+}
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+  justify-content: space-between;
+}
+
+.hotkeys-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.hotkey-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hotkey {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+.hotkey kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 5px;
+  font-family: 'Inter', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.hotkey span {
+  color: var(--text-secondary);
+}
+
+.footer-meta {
+  text-align: right;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.footer-meta .version-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+  border-radius: 100px;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .hero { padding: 56px 0 40px; }
+  .hero-brand h1 { font-size: 2.2rem; }
+  .hero-stats { gap: 12px; }
+  .stat-pill { padding: 8px 14px; font-size: 0.82rem; }
+  .card { padding: 22px 18px; }
+  .footer-inner { flex-direction: column; gap: 32px; }
+  .footer-meta { text-align: left; }
+  .card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-brand">
+      <h1>TAKEPEEK</h1>
+      <span class="badge-wd">WD</span>
+    </div>
+    <p class="hero-subtitle">WarDogs External</p>
+    <p class="hero-version">Version <span>v2.0.24</span></p>
+    <div class="hero-stats">
+      <div class="stat-pill">
+        <span class="stat-icon">&#9881;</span>
+        <span class="stat-value">40+</span> Features
+      </div>
+      <div class="stat-pill">
+        <span class="stat-icon">&#9776;</span>
+        <span class="stat-value">5</span> Profiles
+      </div>
+      <div class="stat-pill">
+        <span class="stat-icon">&#8635;</span>
+        <span class="stat-value">Auto</span>-Update
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+
+<!-- ═══════════════════ COMBAT ═══════════════════ -->
+<div class="section-heading">
+  <h2><span class="accent">Combat</span> Features</h2>
+  <p>Precision aiming, automated fire, and recoil control</p>
+</div>
+<div class="card-grid">
+
+  <!-- Aimbot -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+      </div>
+      <div class="card-title">Aimbot</div>
+    </div>
+    <p class="card-desc">Full-featured aim assist with FOV circle, adjustable smoothing, and bullet prediction for accurate engagements.</p>
+    <ul class="feature-list">
+      <li>FOV circle overlay with adjustable radius</li>
+      <li>Smoothing slider (1 &ndash; 20) for natural movement</li>
+      <li>Bone selection: Head, Neck, Chest, Pelvis</li>
+      <li>Visibility check &amp; team check filters</li>
+      <li>Target lock to stay on current target</li>
+      <li>Bullet prediction: drop + travel-time lead</li>
+      <li>Hold or Toggle activation mode</li>
+      <li>8 configurable key binds</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">FOV</span>
+      <span class="tag">Prediction</span>
+      <span class="tag">Smoothing</span>
+      <span class="tag purple">8 Keys</span>
+    </div>
+  </div>
+
+  <!-- Triggerbot -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="card-title">Triggerbot</div>
+    </div>
+    <p class="card-desc">Automatic fire when crosshair is on target, with configurable delay for human-like timing.</p>
+    <ul class="feature-list">
+      <li>Configurable delay: 0 &ndash; 200 ms</li>
+      <li>Custom key bind selection</li>
+      <li>Works alongside aimbot or standalone</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">Delay</span>
+      <span class="tag purple">Key Bind</span>
+    </div>
+  </div>
+
+  <!-- No Recoil / No Sway / No Spread -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon orange">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round"><path d="M12 22V8"/><path d="M5 12l7-7 7 7"/><line x1="4" y1="4" x2="20" y2="20" stroke-dasharray="3 3" opacity="0.5"/></svg>
+      </div>
+      <div class="card-title">No Recoil / Sway / Spread <span class="wip">WIP</span></div>
+    </div>
+    <p class="card-desc">Weapon stabilization features to eliminate recoil, sway, and bullet spread. Currently in development.</p>
+    <ul class="feature-list">
+      <li>No Recoil: removes vertical/horizontal kick</li>
+      <li>No Sway: eliminates weapon idle sway</li>
+      <li>No Spread: tightens bullet grouping</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag yellow">In Progress</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ PLAYER ESP ═══════════════════ -->
+<div class="section-heading">
+  <h2>Player <span class="accent">ESP</span></h2>
+  <p>See every player on the battlefield with fully customizable overlays</p>
+</div>
+<div class="card-grid">
+
+  <!-- Bounding Boxes -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </div>
+      <div class="card-title">Bounding Boxes</div>
+    </div>
+    <p class="card-desc">Draw 2D boxes around players with style options for clear identification at any range.</p>
+    <ul class="feature-list">
+      <li>Full box or Corner-only style</li>
+      <li>Color-coded by visibility state</li>
+      <li>Scales with distance for accurate sizing</li>
+    </ul>
+  </div>
+
+  <!-- Skeleton -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="2"/><line x1="12" y1="6" x2="12" y2="14"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="12" y1="14" x2="8" y2="20"/><line x1="12" y1="14" x2="16" y2="20"/></svg>
+      </div>
+      <div class="card-title">Skeleton Rendering</div>
+    </div>
+    <p class="card-desc">Draws bone connections between joints for precise player pose visualization.</p>
+    <ul class="feature-list">
+      <li>Full skeletal joint mapping</li>
+      <li>Visibility-based coloring</li>
+      <li>Works alongside bounding boxes</li>
+    </ul>
+  </div>
+
+  <!-- Glow -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 3" opacity="0.4"/></svg>
+      </div>
+      <div class="card-title">Glow Effect</div>
+    </div>
+    <p class="card-desc">Adds a glowing highlight around players for high-visibility identification.</p>
+    <ul class="feature-list">
+      <li>Intensity slider: 1 &ndash; 5</li>
+      <li>Custom color picker</li>
+      <li>Visible through light terrain cover</li>
+    </ul>
+  </div>
+
+  <!-- Info ESP -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="13" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/></svg>
+      </div>
+      <div class="card-title">Player Info Overlay</div>
+    </div>
+    <p class="card-desc">Displays detailed player information alongside ESP visuals.</p>
+    <ul class="feature-list">
+      <li>Health bar with color-coded gradient</li>
+      <li>Player name display</li>
+      <li>Distance readout in meters</li>
+      <li>Snaplines: Bottom, Center, or Top origin</li>
+      <li>Head dot indicator</li>
+      <li>Hitmarker on damage dealt</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">Health</span>
+      <span class="tag">Name</span>
+      <span class="tag">Distance</span>
+      <span class="tag purple">Snaplines</span>
+    </div>
+  </div>
+
+  <!-- Visibility & Filters -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon orange">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div class="card-title">Visibility &amp; Filters</div>
+    </div>
+    <p class="card-desc">Smart coloring and toggles to filter the information that matters most.</p>
+    <ul class="feature-list">
+      <li>Visible = yellow, Hidden = red coloring</li>
+      <li>Toggle: Show Team / Downed / Dead</li>
+      <li>Faction tag display</li>
+      <li>Weapon name readout</li>
+      <li>View direction line</li>
+      <li>Off-screen arrows for out-of-view targets</li>
+      <li>Max distance slider: 50 &ndash; 2000 m</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag yellow">Visible</span>
+      <span class="tag" style="background:rgba(239,68,68,0.12);color:#ef4444;">Hidden</span>
+      <span class="tag blue">Team</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ VEHICLE ESP ═══════════════════ -->
+<div class="section-heading">
+  <h2>Vehicle <span class="accent">ESP</span></h2>
+  <p>Track every vehicle on the map with occupant details</p>
+</div>
+<div class="card-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon orange">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round"><rect x="2" y="8" width="20" height="8" rx="2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M5 8V6a2 2 0 012-2h10a2 2 0 012 2v2"/></svg>
+      </div>
+      <div class="card-title">Vehicle Tracking</div>
+    </div>
+    <p class="card-desc">Overlay ESP boxes on all vehicles with occupant count and team identification.</p>
+    <ul class="feature-list">
+      <li>Bounding boxes with occupant count</li>
+      <li>Enemy / Team color coding</li>
+      <li>Land vehicle filter</li>
+      <li>Air vehicle filter (helicopters, etc.)</li>
+      <li>Toggle: show dead/empty vehicles</li>
+      <li>Max distance slider: 50 &ndash; 3000 m</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag orange">Land</span>
+      <span class="tag blue">Air</span>
+      <span class="tag">Occupants</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ WORLD ESP ═══════════════════ -->
+<div class="section-heading">
+  <h2>World <span class="accent">ESP</span></h2>
+  <p>Locate dropped items, explosives, structures, and spawn points</p>
+</div>
+<div class="card-grid">
+
+  <!-- Dropped Items -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div class="card-title">Dropped Items</div>
+    </div>
+    <p class="card-desc">See every dropped item on the ground with category-based sub-filters.</p>
+    <ul class="feature-list">
+      <li>Weapons</li>
+      <li>Ammo</li>
+      <li>Attachments</li>
+      <li>Medical supplies</li>
+      <li>Grenades</li>
+      <li>Other items</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">Weapons</span>
+      <span class="tag">Ammo</span>
+      <span class="tag">Medical</span>
+      <span class="tag purple">Grenades</span>
+    </div>
+  </div>
+
+  <!-- Battlefield Objects -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon red">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div class="card-title">Battlefield Objects</div>
+    </div>
+    <p class="card-desc">Track mines, mortars, FOBs, and other strategic objects across the map.</p>
+    <ul class="feature-list">
+      <li>Mines &amp; Explosives</li>
+      <li>Emplacements / Mortars</li>
+      <li>FOBs / Spawn Points</li>
+      <li>Bodybags</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag" style="background:rgba(239,68,68,0.12);color:#ef4444;">Explosives</span>
+      <span class="tag orange">FOBs</span>
+      <span class="tag">Spawns</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ RADAR ═══════════════════ -->
+<div class="section-heading">
+  <h2>2D <span class="accent">Radar</span></h2>
+  <p>Always-on minimap with real-time entity tracking</p>
+</div>
+<div class="card-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+      </div>
+      <div class="card-title">Minimap Radar</div>
+    </div>
+    <p class="card-desc">Draggable 2D radar overlay with zoom control and color-coded entity dots.</p>
+    <ul class="feature-list">
+      <li>Size slider: 80 &ndash; 300 px</li>
+      <li>Zoom slider: 0.5x &ndash; 5x</li>
+      <li>Drag to reposition, click to reset</li>
+      <li>Enemies = red dots</li>
+      <li>Team = blue dots</li>
+      <li>Downed = yellow dots</li>
+      <li>Vehicles = orange dots</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag" style="background:rgba(239,68,68,0.12);color:#ef4444;">Enemies</span>
+      <span class="tag blue">Team</span>
+      <span class="tag yellow">Downed</span>
+      <span class="tag orange">Vehicles</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ COLORS ═══════════════════ -->
+<div class="section-heading">
+  <h2>Color <span class="accent">Customization</span></h2>
+  <p>Full control over every ESP color for visible, hidden, and team entities</p>
+</div>
+<div class="card-grid">
+
+  <div class="card" style="grid-column: 1 / -1; max-width: 720px;">
+    <div class="card-header">
+      <div class="card-icon purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="2" fill="#eab308" stroke="none"/><circle cx="8" cy="14" r="2" fill="#ef4444" stroke="none"/><circle cx="16" cy="14" r="2" fill="#3b82f6" stroke="none"/></svg>
+      </div>
+      <div class="card-title">ESP Color System</div>
+    </div>
+    <p class="card-desc">Every ESP element color is independently customizable. Pick colors for visible enemies, hidden enemies, and team members across all overlay types.</p>
+    <ul class="feature-list">
+      <li>Visible enemies: Box, Skeleton, Name, Snapline (4 color slots)</li>
+      <li>Hidden enemies: Box, Skeleton, Name, Snapline (4 color slots)</li>
+      <li>Team: Box, Skeleton, Name (3 color slots)</li>
+    </ul>
+    <div class="color-grid">
+      <div class="swatch"><span class="swatch-dot" style="background:#eab308;"></span>Visible (default)</div>
+      <div class="swatch"><span class="swatch-dot" style="background:#ef4444;"></span>Hidden (default)</div>
+      <div class="swatch"><span class="swatch-dot" style="background:#3b82f6;"></span>Team (default)</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ MISC ═══════════════════ -->
+<div class="section-heading">
+  <h2>Miscellaneous <span class="accent">Tools</span></h2>
+  <p>Quality-of-life features, overlays, and developer utilities</p>
+</div>
+<div class="card-grid">
+
+  <!-- Night Mode -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </div>
+      <div class="card-title">Night Mode</div>
+    </div>
+    <p class="card-desc">Screen dimming overlay with adjustable alpha for comfortable low-light play.</p>
+    <ul class="feature-list">
+      <li>Full-screen darkening overlay</li>
+      <li>Alpha slider for intensity control</li>
+    </ul>
+  </div>
+
+  <!-- FOV Changer -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div class="card-title">FOV Changer</div>
+    </div>
+    <p class="card-desc">Override the game's field of view from 30 to 170 degrees for wider or tighter views.</p>
+    <ul class="feature-list">
+      <li>FOV slider: 30 &ndash; 170 degrees</li>
+      <li>Applies in real-time</li>
+    </ul>
+  </div>
+
+  <!-- Overlays -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <div class="card-title">Screen Overlays</div>
+    </div>
+    <p class="card-desc">Heads-up display elements for crosshair, FPS, and branding.</p>
+    <ul class="feature-list">
+      <li>Watermark toggle</li>
+      <li>Crosshair overlay</li>
+      <li>FPS counter with player/vehicle counts</li>
+    </ul>
+  </div>
+
+  <!-- Developer -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon orange">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div class="card-title">Developer Tools</div>
+    </div>
+    <p class="card-desc">SDK analysis and debug overlays for development and troubleshooting.</p>
+    <ul class="feature-list">
+      <li>SDK offset dumper (F4)</li>
+      <li>Debug HUD with internals (F3)</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag orange">F4 Dump</span>
+      <span class="tag orange">F3 Debug</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ SETTINGS ═══════════════════ -->
+<div class="section-heading">
+  <h2>Settings &amp; <span class="accent">Profiles</span></h2>
+  <p>Save, load, and manage configurations with auto-update support</p>
+</div>
+<div class="card-grid">
+
+  <!-- Config Profiles -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2db45a" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="card-title">Config Profiles</div>
+    </div>
+    <p class="card-desc">Maintain up to 5 separate configuration profiles for different playstyles or scenarios.</p>
+    <ul class="feature-list">
+      <li>5 independent save slots</li>
+      <li>Save / Load / Reset per profile</li>
+      <li>Active features summary panel</li>
+      <li>All settings serialized to JSON</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">5 Slots</span>
+      <span class="tag purple">Save/Load</span>
+    </div>
+  </div>
+
+  <!-- Auto-Updater -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      </div>
+      <div class="card-title">Auto-Updater</div>
+    </div>
+    <p class="card-desc">Checks GitHub for the latest release on startup and downloads updates automatically.</p>
+    <ul class="feature-list">
+      <li>Checks latest GitHub release on launch</li>
+      <li>Automatic download &amp; replace</li>
+      <li>Version comparison with semantic versioning</li>
+    </ul>
+    <div class="tag-row">
+      <span class="tag">GitHub</span>
+      <span class="tag purple">Auto</span>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="hotkeys-section">
+        <h3>Hotkeys</h3>
+        <div class="hotkey-list">
+          <div class="hotkey"><kbd>INSERT</kbd> <span>Toggle Menu</span></div>
+          <div class="hotkey"><kbd>F3</kbd> <span>Debug HUD</span></div>
+          <div class="hotkey"><kbd>F4</kbd> <span>SDK Dump</span></div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        TakePeek WarDogs<br>
+        <span class="version-tag">v2.0.24</span><br>
+        External Overlay &middot; 2024 &ndash; 2026
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

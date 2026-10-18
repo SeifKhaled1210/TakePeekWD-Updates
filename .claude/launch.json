@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sot-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8766", "--directory", "C:\\Users\\Administrator\\Downloads\\TakePeek 2.0 Sea Of Thieves"],
+      "port": 8766
+    }
+  ]
+}

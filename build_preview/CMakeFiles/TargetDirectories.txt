@@ -1,0 +1,3 @@
+C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_preview/CMakeFiles/TakePeekWD.dir
+C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_preview/CMakeFiles/ALL_BUILD.dir
+C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_preview/CMakeFiles/ZERO_CHECK.dir

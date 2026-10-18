@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TakePeek WarDogs - Menu Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a12;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #e0e0e8;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+.page-label {
+  color: #64647080;
+  font-size: 12px;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+.menu-window {
+  width: 940px;
+  height: 500px;
+  background: rgba(19, 19, 25, 0.97);
+  border: 1px solid rgba(41, 41, 54, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ===== HEADER ===== */
+.header {
+  height: 48px;
+  min-height: 48px;
+  background: #101016;
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 18px;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(45, 180, 90, 0.31);
+}
+.header .gradient-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(to bottom, rgba(16,16,22,0), rgba(22,22,28,1));
+  pointer-events: none;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reticle-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f0f0f4;
+  letter-spacing: 0.5px;
+}
+.wd-badge {
+  border: 1.2px solid rgba(45,180,90,0.78);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: rgba(45,180,90,0.78);
+  font-weight: 600;
+  line-height: 15px;
+}
+.brand-subtitle {
+  font-size: 10px;
+  color: rgba(100, 100, 112, 0.78);
+  position: absolute;
+  left: 50px;
+  top: 28px;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(60, 200, 90);
+}
+.player-count {
+  font-size: 11px;
+  color: rgba(120, 120, 135, 1);
+}
+
+/* ===== BODY LAYOUT ===== */
+.body-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+/* ===== NAVIGATION RAIL ===== */
+.nav-rail {
+  width: 56px;
+  min-width: 56px;
+  background: rgba(16, 16, 21, 1.0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  gap: 4px;
+  position: relative;
+}
+.nav-rail::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: rgba(50, 50, 64, 0.39);
+}
+.nav-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  border: none;
+  background: transparent;
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.03); }
+.nav-btn.selected { background: rgba(45,180,90,0.12); }
+.nav-btn.selected::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: #2db45a;
+  border-radius: 2px;
+}
+.nav-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.nav-btn .icon-color { stroke: #848494; fill: none; }
+.nav-btn:hover .icon-color { stroke: #dcdce4; }
+.nav-btn.selected .icon-color { stroke: #2db45a; }
+.nav-btn .icon-fill { fill: #848494; }
+.nav-btn:hover .icon-fill { fill: #dcdce4; }
+.nav-btn.selected .icon-fill { fill: #2db45a; }
+.nav-tooltip {
+  display: none;
+  position: absolute;
+  left: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #24242e;
+  color: #e0e0e8;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  border: 1px solid rgba(50,50,64,0.5);
+}
+.nav-btn:hover .nav-tooltip { display: block; }
+
+/* ===== CONTENT AREA ===== */
+.content-area {
+  flex: 1;
+  padding: 4px 8px 8px 8px;
+  overflow: hidden;
+  display: flex;
+}
+.tab-content { display: none; width: 100%; height: 100%; }
+.tab-content.active { display: flex; }
+
+/* ===== PANELS ===== */
+.panel {
+  background: rgba(25, 25, 32, 0.9);
+  border-radius: 8px;
+  border: 1px solid rgba(41, 41, 54, 0.3);
+  padding: 8px 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: rgba(60,60,80,0.5); border-radius: 2px; }
+
+/* ===== SECTION HEADER ===== */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 6px 0;
+}
+.section-header:first-child { margin-top: 4px; }
+.section-header .bar {
+  width: 3px;
+  height: 14px;
+  background: #2db45a;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.section-header .text {
+  color: rgba(45, 180, 90, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== TOGGLE ===== */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  cursor: pointer;
+  min-height: 22px;
+}
+.toggle-track {
+  width: 32px;
+  height: 16px;
+  border-radius: 8px;
+  background: #2c2b35;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle-track.on {
+  background: rgba(45, 180, 90, 0.35);
+}
+.toggle-knob {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f0f0f5;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.toggle-track.on .toggle-knob {
+  left: 18px;
+}
+.toggle-label {
+  font-size: 14px;
+  color: #72718a;
+  transition: color 0.15s;
+}
+.toggle-track.on + .toggle-label {
+  color: #e0e0e8;
+}
+
+/* ===== SLIDER ===== */
+.slider-container {
+  padding: 4px 0 2px 0;
+}
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.slider-label { font-size: 14px; color: #72718a; }
+.slider-value { font-size: 14px; color: #2db45a; }
+.slider-track-wrapper {
+  position: relative;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.slider-track {
+  width: 100%;
+  height: 4px;
+  background: #222230;
+  border-radius: 2px;
+  position: relative;
+}
+.slider-fill {
+  height: 100%;
+  background: rgba(45, 180, 90, 0.5);
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.slider-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2db45a;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  z-index: 2;
+}
+.slider-thumb::after {
+  content: '';
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #1e1d25;
+}
+
+/* ===== BUTTON GROUPS ===== */
+.btn-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+.btn-sm {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  background: #1b1a21;
+  color: #999aa6;
+  transition: all 0.15s;
+}
+.btn-sm.selected {
+  background: rgba(45, 180, 90, 0.4);
+  color: #fff;
+}
+.btn-sm:hover:not(.selected) {
+  background: #252430;
+}
+
+/* Profile / Config buttons */
+.btn-profile {
+  width: 80px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  background: #1b1a21;
+  color: #999aa6;
+  transition: all 0.15s;
+}
+.btn-profile.selected {
+  background: rgba(45, 180, 90, 0.3);
+  color: #fff;
+}
+.btn-action {
+  height: 30px;
+  border-radius: 4px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-save {
+  width: 100px;
+  background: rgba(45, 180, 90, 0.25);
+  color: #e0e0e8;
+}
+.btn-load {
+  width: 100px;
+  background: #1b1a21;
+  color: #999aa6;
+}
+.btn-reset {
+  width: 100px;
+  background: rgba(153, 38, 38, 0.5);
+  color: #e0e0e8;
+}
+.btn-dump {
+  width: 100%;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  background: #1b1a21;
+  color: #999aa6;
+  transition: all 0.15s;
+}
+.btn-dump:hover { background: #252430; }
+
+/* ===== COLOR SWATCH ===== */
+.color-swatches {
+  display: flex;
+  gap: 10px;
+  margin: 4px 0 2px 0;
+}
+.color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.swatch-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.swatch-label {
+  font-size: 9px;
+  color: #72718a;
+}
+
+/* ===== ESP PREVIEW ===== */
+.esp-preview-bg {
+  background: #08080e;
+  border-radius: 4px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== INFO TEXT ===== */
+.info-green { color: rgba(115, 217, 140, 1); font-size: 13px; margin: 2px 0; }
+.info-gray { color: rgba(128, 128, 140, 1); font-size: 13px; margin: 1px 0; }
+.info-dimgray { color: rgba(115, 115, 128, 1); font-size: 12px; margin: 1px 0; font-family: 'Consolas', 'Courier New', monospace; }
+.bullet-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #e0e0e8;
+  margin: 2px 0;
+}
+.bullet-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2db45a;
+  flex-shrink: 0;
+}
+
+.spacer-4 { height: 4px; }
+.spacer-8 { height: 8px; }
+</style>
+</head>
+<body>
+
+<div class="page-label">TakePeek WarDogs v2.0.24 &mdash; Menu Preview (INSERT to toggle)</div>
+
+<div class="menu-window" id="menuWindow">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="gradient-fade"></div>
+    <div class="header-left">
+      <svg class="reticle-icon" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+        <!-- Corner brackets -->
+        <line x1="2.4" y1="2.4" x2="9" y2="2.4" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="2.4" y1="2.4" x2="2.4" y2="9" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="27.6" y1="2.4" x2="21" y2="2.4" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="27.6" y1="2.4" x2="27.6" y2="9" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="2.4" y1="27.6" x2="9" y2="27.6" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="2.4" y1="27.6" x2="2.4" y2="21" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="27.6" y1="27.6" x2="21" y2="27.6" stroke="#c8c8d2" stroke-width="2"/>
+        <line x1="27.6" y1="27.6" x2="27.6" y2="21" stroke="#c8c8d2" stroke-width="2"/>
+        <!-- Cross ticks -->
+        <line x1="15" y1="10.2" x2="15" y2="13.5" stroke="#a0a0ac" stroke-width="2"/>
+        <line x1="15" y1="16.5" x2="15" y2="19.8" stroke="#a0a0ac" stroke-width="2"/>
+        <line x1="10.2" y1="15" x2="13.5" y2="15" stroke="#a0a0ac" stroke-width="2"/>
+        <!-- Right arm in green/accent -->
+        <line x1="16.5" y1="15" x2="23.2" y2="15" stroke="#2db45a" stroke-width="2.5"/>
+        <!-- Center dot -->
+        <rect x="12" y="12" width="6" height="6" rx="1" fill="#2db45a"/>
+      </svg>
+      <span class="brand-title">TAKEPEEK</span>
+      <span class="wd-badge">WD</span>
+      <span class="brand-subtitle">WarDogs External</span>
+    </div>
+    <div class="header-right">
+      <span class="status-dot"></span>
+      <span class="player-count">P:12</span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-container">
+    <!-- NAV RAIL -->
+    <div class="nav-rail">
+      <button class="nav-btn selected" data-tab="0" onclick="switchTab(0)">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="6.8" class="icon-color" stroke-width="1.5" fill="none"/>
+          <line x1="0.5" y1="10" x2="19.5" y2="10" class="icon-color" stroke-width="1.5"/>
+          <line x1="10" y1="0.5" x2="10" y2="19.5" class="icon-color" stroke-width="1.5"/>
+        </svg>
+        <span class="nav-tooltip">Combat</span>
+      </button>
+      <button class="nav-btn" data-tab="1" onclick="switchTab(1)">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="10" cy="10" rx="9.5" ry="5.5" class="icon-color" stroke-width="1.5" fill="none"/>
+          <circle cx="10" cy="10" r="2.4" class="icon-color" stroke-width="1.5" fill="none"/>
+        </svg>
+        <span class="nav-tooltip">Visuals</span>
+      </button>
+      <button class="nav-btn" data-tab="2" onclick="switchTab(2)">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <line x1="3.2" y1="4.6" x2="16.8" y2="4.6" class="icon-color" stroke-width="1.5"/>
+          <circle cx="6.9" cy="4.6" r="1.7" class="icon-fill"/>
+          <line x1="3.2" y1="10" x2="16.8" y2="10" class="icon-color" stroke-width="1.5"/>
+          <circle cx="13.1" cy="10" r="1.7" class="icon-fill"/>
+          <line x1="3.2" y1="15.4" x2="16.8" y2="15.4" class="icon-color" stroke-width="1.5"/>
+          <circle cx="10" cy="15.4" r="1.7" class="icon-fill"/>
+        </svg>
+        <span class="nav-tooltip">Misc</span>
+      </button>
+      <button class="nav-btn" data-tab="3" onclick="switchTab(3)">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="6.8" class="icon-color" stroke-width="1.6" fill="none"/>
+          <circle cx="10" cy="10" r="2.9" class="icon-color" stroke-width="1.5" fill="none"/>
+          <line x1="10" y1="0.2" x2="10" y2="2.7" class="icon-color" stroke-width="1.5"/>
+          <line x1="10" y1="17.3" x2="10" y2="19.8" class="icon-color" stroke-width="1.5"/>
+          <line x1="0.2" y1="10" x2="2.7" y2="10" class="icon-color" stroke-width="1.5"/>
+          <line x1="17.3" y1="10" x2="19.8" y2="10" class="icon-color" stroke-width="1.5"/>
+          <line x1="3.1" y1="3.1" x2="4.9" y2="4.9" class="icon-color" stroke-width="1.5"/>
+          <line x1="15.1" y1="15.1" x2="16.9" y2="16.9" class="icon-color" stroke-width="1.5"/>
+          <line x1="16.9" y1="3.1" x2="15.1" y2="4.9" class="icon-color" stroke-width="1.5"/>
+          <line x1="4.9" y1="15.1" x2="3.1" y2="16.9" class="icon-color" stroke-width="1.5"/>
+        </svg>
+        <span class="nav-tooltip">Settings</span>
+      </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+      <!-- TAB 0: COMBAT -->
+      <div class="tab-content active" id="tab0" style="gap:12px;">
+        <!-- Left: Aimbot -->
+        <div class="panel" style="flex:1;" id="aim_panel"></div>
+        <!-- Right: Triggerbot -->
+        <div class="panel" style="flex:1;" id="trig_panel"></div>
+      </div>
+
+      <!-- TAB 1: VISUALS -->
+      <div class="tab-content" id="tab1" style="gap:12px;">
+        <div class="panel" style="flex:0.33;min-width:0;" id="esp_panel"></div>
+        <div class="panel" style="flex:0.33;min-width:0;" id="color_panel"></div>
+        <div class="panel" style="flex:0.34;min-width:0;display:flex;flex-direction:column;" id="preview_panel"></div>
+      </div>
+
+      <!-- TAB 2: MISC -->
+      <div class="tab-content" id="tab2" style="gap:12px;">
+        <div class="panel" style="flex:1;" id="misc_left"></div>
+        <div class="panel" style="flex:1;" id="misc_right"></div>
+      </div>
+
+      <!-- TAB 3: SETTINGS -->
+      <div class="tab-content" id="tab3" style="gap:12px;">
+        <div class="panel" style="flex:1;" id="cfg_panel"></div>
+        <div class="panel" style="flex:1;" id="cfg_right"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+const state = {
+  // Aimbot
+  aimbot: false,
+  teamCheck: true,
+  aimVisCheck: true,
+  showFov: true,
+  aimLock: false,
+  fov: 5.0,
+  smooth: 4.0,
+  aimMaxDistance: 200,
+  aimPrediction: true,
+  aimHoldMode: true,
+  aimKeyIdx: 0,
+  aimBone: 0,
+  // Recoil
+  noRecoil: false,
+  noSway: false,
+  noSpread: false,
+  // Triggerbot
+  triggerbot: false,
+  triggerDelay: 30,
+  // ESP
+  esp: true,
+  espBoxes: true,
+  espBoxStyle: 0,
+  espSkeleton: true,
+  espGlow: false,
+  espHealth: true,
+  espName: true,
+  espDistance: true,
+  espSnaplines: false,
+  espHeadDot: false,
+  espHitmarker: true,
+  espVisCheck: false,
+  espShowTeam: false,
+  espShowDowned: true,
+  espShowDead: false,
+  espFaction: true,
+  espWeapon: true,
+  espViewDir: false,
+  espOffScreen: false,
+  espMaxDistance: 300,
+  // Vehicles
+  espVehicles: true,
+  espVehicleOccupants: true,
+  vehicleEnemyOnly: false,
+  vehicleShowDead: false,
+  vehicleShowEmpty: true,
+  vehicleFilterLand: true,
+  vehicleFilterAir: true,
+  vehicleMaxDistance: 2000,
+  // World ESP
+  espWorldItems: false,
+  espMines: false,
+  espEmplacements: true,
+  espFOBs: true,
+  espBodybags: true,
+  // Radar
+  radar: false,
+  // Misc
+  nightMode: false,
+  fovChanger: false,
+  watermark: true,
+  crosshair: false,
+  fpsCounter: true,
+  // Config
+  activeProfile: 0
+};
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+function switchTab(idx) {
+  document.querySelectorAll('.nav-btn').forEach((b, i) => {
+    b.classList.toggle('selected', i === idx);
+  });
+  document.querySelectorAll('.tab-content').forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+  });
+  if (idx === 1) requestAnimationFrame(drawESPPreview);
+}
+
+// ============================================
+// WIDGET BUILDERS
+// ============================================
+function makeHeader(text) {
+  return `<div class="section-header"><div class="bar"></div><div class="text">${text}</div></div>`;
+}
+
+function makeToggle(label, key) {
+  const on = state[key];
+  return `<div class="toggle-row" onclick="toggleState('${key}', this)">
+    <div class="toggle-track ${on ? 'on' : ''}"><div class="toggle-knob"></div></div>
+    <span class="toggle-label">${label}</span>
+  </div>`;
+}
+
+function toggleState(key, el) {
+  state[key] = !state[key];
+  const track = el.querySelector('.toggle-track');
+  track.classList.toggle('on', state[key]);
+  rebuildAll();
+}
+
+function makeSlider(label, key, min, max, step, fmt) {
+  const val = state[key];
+  const pct = ((val - min) / (max - min)) * 100;
+  const display = fmt ? fmt(val) : (Number.isInteger(step) ? val : val.toFixed(1));
+  return `<div class="slider-container">
+    <div class="slider-header">
+      <span class="slider-label">${label}</span>
+      <span class="slider-value">${display}</span>
+    </div>
+    <div class="slider-track-wrapper" data-key="${key}" data-min="${min}" data-max="${max}" data-step="${step || 0.1}">
+      <div class="slider-track">
+        <div class="slider-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="slider-thumb" style="left:${pct}%"></div>
+    </div>
+  </div>`;
+}
+
+function makeBtnGroup(items, key, widthPx) {
+  let html = '<div class="btn-group">';
+  items.forEach((item, i) => {
+    const sel = state[key] === i;
+    const w = widthPx ? `width:${widthPx}px;` : '';
+    html += `<button class="btn-sm ${sel ? 'selected' : ''}" style="${w}" onclick="state['${key}']=${i};rebuildAll();">${item}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function makeColorSwatches(swatches) {
+  let html = '<div class="color-swatches">';
+  swatches.forEach(s => {
+    html += `<div class="color-swatch"><div class="swatch-box" style="background:${s.color}"></div><span class="swatch-label">${s.label}</span></div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// ============================================
+// SLIDER DRAG LOGIC
+// ============================================
+let activeSlider = null;
+document.addEventListener('mousedown', (e) => {
+  const wrapper = e.target.closest('.slider-track-wrapper');
+  if (!wrapper) return;
+  activeSlider = wrapper;
+  updateSlider(e);
+});
+document.addEventListener('mousemove', (e) => {
+  if (!activeSlider) return;
+  updateSlider(e);
+});
+document.addEventListener('mouseup', () => {
+  activeSlider = null;
+});
+
+function updateSlider(e) {
+  if (!activeSlider) return;
+  const rect = activeSlider.getBoundingClientRect();
+  let pct = (e.clientX - rect.left) / rect.width;
+  pct = Math.max(0, Math.min(1, pct));
+  const key = activeSlider.dataset.key;
+  const min = parseFloat(activeSlider.dataset.min);
+  const max = parseFloat(activeSlider.dataset.max);
+  const step = parseFloat(activeSlider.dataset.step);
+  let val = min + pct * (max - min);
+  if (step >= 1) val = Math.round(val);
+  else val = Math.round(val / step) * step;
+  state[key] = val;
+  rebuildAll();
+}
+
+// ============================================
+// TAB BUILDERS
+// ============================================
+function buildCombatTab() {
+  // Left panel: Aimbot
+  let left = '';
+  left += makeHeader('AIMBOT');
+  left += makeToggle('Enable Aimbot', 'aimbot');
+  left += makeToggle('Team Check', 'teamCheck');
+  left += makeToggle('Vis Check', 'aimVisCheck');
+  left += makeToggle('Show FOV Circle', 'showFov');
+  left += makeToggle('Target Lock', 'aimLock');
+  left += makeSlider('FOV Radius', 'fov', 1, 50, 0.1);
+  left += makeSlider('Smoothing', 'smooth', 1, 20, 0.1);
+  left += makeSlider('Max Distance', 'aimMaxDistance', 10, 1000, 1, v => v.toFixed(1));
+  left += makeToggle('Prediction (Drop + Lead)', 'aimPrediction');
+
+  left += makeHeader('AIM KEY');
+  const modes = ['Hold', 'Toggle'];
+  left += '<div class="btn-group">';
+  modes.forEach((m, i) => {
+    const sel = state.aimHoldMode ? (i === 0) : (i === 1);
+    left += `<button class="btn-sm ${sel ? 'selected' : ''}" style="width:60px;" onclick="state.aimHoldMode=${i===0};rebuildAll();">${m}</button>`;
+  });
+  left += '</div>';
+  const keyNames = ['RMB', 'LMB', 'Mouse4', 'Mouse5', 'Shift', 'MMB', 'Alt', 'CapsLk'];
+  left += '<div style="display:flex;align-items:center;gap:4px;margin:4px 0;flex-wrap:wrap;">';
+  left += '<span style="font-size:12px;color:#72718a;">Bind:</span>';
+  keyNames.forEach((k, i) => {
+    const sel = state.aimKeyIdx === i;
+    left += `<button class="btn-sm ${sel ? 'selected' : ''}" onclick="state.aimKeyIdx=${i};rebuildAll();">${k}</button>`;
+  });
+  left += '</div>';
+
+  left += makeHeader('AIM BONE');
+  left += makeBtnGroup(['Head', 'Neck', 'Chest', 'Pelvis'], 'aimBone', 72);
+
+  left += makeHeader('RECOIL / SWAY');
+  left += makeToggle('No Recoil', 'noRecoil');
+  left += makeToggle('No Sway', 'noSway');
+  left += makeToggle('No Spread (WIP)', 'noSpread');
+
+  document.getElementById('aim_panel').innerHTML = left;
+
+  // Right panel: Triggerbot
+  let right = '';
+  right += makeHeader('TRIGGERBOT');
+  right += makeToggle('Enable Triggerbot', 'triggerbot');
+  right += makeSlider('Trigger Delay (ms)', 'triggerDelay', 0, 200, 1);
+  document.getElementById('trig_panel').innerHTML = right;
+}
+
+function buildVisualsTab() {
+  // Left: ESP elements
+  let left = '';
+  left += makeHeader('ESP ELEMENTS');
+  left += makeToggle('Enable ESP', 'esp');
+  left += '<div class="spacer-4"></div>';
+  left += makeToggle('Bounding Boxes', 'espBoxes');
+  left += makeBtnGroup(['Full', 'Corners'], 'espBoxStyle', 60);
+  left += makeToggle('Skeleton', 'espSkeleton');
+  left += makeToggle('Glow', 'espGlow');
+  left += makeToggle('Health Bar', 'espHealth');
+  left += makeToggle('Player Name', 'espName');
+  left += makeToggle('Distance', 'espDistance');
+  left += makeToggle('Snaplines', 'espSnaplines');
+  left += makeToggle('Head Dot', 'espHeadDot');
+  left += makeToggle('Hitmarker', 'espHitmarker');
+  left += makeToggle('Vis Check', 'espVisCheck');
+  left += makeToggle('Show Team', 'espShowTeam');
+  left += makeToggle('Show Downed', 'espShowDowned');
+  left += makeToggle('Show Dead', 'espShowDead');
+  left += makeToggle('Faction Tag', 'espFaction');
+  left += makeToggle('Weapon Name', 'espWeapon');
+  left += makeToggle('View Direction', 'espViewDir');
+  left += makeToggle('Off-Screen Arrows', 'espOffScreen');
+  left += makeSlider('Max Distance', 'espMaxDistance', 50, 2000, 1, v => v.toFixed(1));
+
+  left += makeHeader('VEHICLES');
+  left += makeToggle('Vehicle ESP', 'espVehicles');
+  left += makeToggle('Show Occupants', 'espVehicleOccupants');
+  left += makeToggle('Enemy Only', 'vehicleEnemyOnly');
+  left += makeToggle('Show Dead Vehicles', 'vehicleShowDead');
+  left += makeToggle('Show Empty', 'vehicleShowEmpty');
+  left += makeToggle('Land Vehicles', 'vehicleFilterLand');
+  left += makeToggle('Air Vehicles', 'vehicleFilterAir');
+  left += makeSlider('Vehicle Max Dist', 'vehicleMaxDistance', 50, 3000, 1, v => v.toFixed(1));
+  left += makeColorSwatches([
+    { label: 'Enemy', color: '#e6a633' },
+    { label: 'Team', color: '#3380ff' }
+  ]);
+
+  left += makeHeader('WORLD ESP');
+  left += makeToggle('Dropped Items', 'espWorldItems');
+  left += makeToggle('Mines / Explosives', 'espMines');
+  left += makeToggle('Emplacements / Mortars', 'espEmplacements');
+  left += makeToggle('FOBs / Spawn Points', 'espFOBs');
+  left += makeToggle('Bodybags', 'espBodybags');
+
+  left += makeHeader('RADAR');
+  left += makeToggle('2D Radar', 'radar');
+
+  document.getElementById('esp_panel').innerHTML = left;
+
+  // Middle: Colors
+  let mid = '';
+  mid += makeHeader('VISIBLE ENEMIES');
+  mid += makeColorSwatches([
+    { label: 'Box', color: '#ffff33' },
+    { label: 'Skel', color: '#ffe619' },
+    { label: 'Name', color: '#ffffff' },
+    { label: 'Snap', color: 'rgba(255,255,51,0.4)' }
+  ]);
+  mid += makeHeader('HIDDEN ENEMIES');
+  mid += makeColorSwatches([
+    { label: 'Box', color: '#ff3333' },
+    { label: 'Skel', color: '#cc2626' },
+    { label: 'Name', color: '#cccccc' },
+    { label: 'Snap', color: 'rgba(255,51,51,0.3)' }
+  ]);
+  mid += makeHeader('TEAM');
+  mid += makeColorSwatches([
+    { label: 'Box', color: '#3380ff' },
+    { label: 'Skel', color: '#2666cc' },
+    { label: 'Name', color: '#99ccff' }
+  ]);
+  document.getElementById('color_panel').innerHTML = mid;
+
+  // Right: Preview
+  let prev = '';
+  prev += makeHeader('PREVIEW');
+  prev += '<div class="esp-preview-bg" id="espPreviewBg"><canvas id="espCanvas"></canvas></div>';
+  document.getElementById('preview_panel').innerHTML = prev;
+
+  requestAnimationFrame(drawESPPreview);
+}
+
+function buildMiscTab() {
+  let left = '';
+  left += makeHeader('VISUAL');
+  left += makeToggle('Night Mode', 'nightMode');
+  left += makeToggle('FOV Changer', 'fovChanger');
+  left += makeHeader('HUD');
+  left += makeToggle('Watermark', 'watermark');
+  left += makeToggle('Crosshair', 'crosshair');
+  left += makeToggle('FPS Counter', 'fpsCounter');
+  document.getElementById('misc_left').innerHTML = left;
+
+  let right = '';
+  right += makeHeader('INFO');
+  right += '<div class="info-green">Active license</div>';
+  right += '<div class="info-gray">Status: Authenticated</div>';
+  right += '<div class="info-gray">License: Lifetime</div>';
+  right += '<div class="info-gray">Process: Attached</div>';
+  right += '<div class="info-gray">Players: 12</div>';
+  right += makeHeader('HOTKEYS');
+  right += '<div class="info-dimgray">INSERT&nbsp;&nbsp;Toggle Menu</div>';
+  right += '<div class="info-dimgray">F3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug HUD</div>';
+  right += '<div class="info-dimgray">F4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dump Offsets</div>';
+  right += makeHeader('SDK DUMPER');
+  right += '<button class="btn-dump">Dump Offsets (F4)</button>';
+  document.getElementById('misc_right').innerHTML = right;
+}
+
+function buildSettingsTab() {
+  let left = '';
+  left += makeHeader('CONFIG PROFILES');
+  left += '<div class="btn-group">';
+  for (let i = 0; i < 5; i++) {
+    const sel = state.activeProfile === i;
+    const name = i === 0 ? 'Default' : `Profile ${i+1}`;
+    left += `<button class="btn-profile ${sel ? 'selected' : ''}" onclick="state.activeProfile=${i};rebuildAll();">${name}</button>`;
+  }
+  left += '</div>';
+  left += '<div class="spacer-8"></div>';
+  left += '<div class="btn-group">';
+  left += '<button class="btn-action btn-save">Save</button>';
+  left += '<button class="btn-action btn-load">Load</button>';
+  left += '<button class="btn-action btn-reset">Reset</button>';
+  left += '</div>';
+  document.getElementById('cfg_panel').innerHTML = left;
+
+  // Active features
+  let right = '';
+  right += makeHeader('ACTIVE FEATURES');
+  const features = [];
+  if (state.aimbot) features.push('Aimbot' + (state.aimPrediction ? ' (Pred)' : '') + (state.aimLock ? ' (Lock)' : ''));
+  if (state.triggerbot) features.push('Triggerbot');
+  if (state.noRecoil) features.push('No Recoil');
+  if (state.noSway) features.push('No Sway');
+  if (state.noSpread) features.push('No Spread (WIP)');
+  if (state.esp) features.push('ESP');
+  if (state.espOffScreen) features.push('Off-Screen Arrows');
+  if (state.espFaction) features.push('Faction Tags');
+  if (state.espWeapon) features.push('Weapon Names');
+  if (state.espViewDir) features.push('View Direction');
+  if (state.espVehicles) features.push('Vehicle ESP');
+  if (state.espWorldItems) features.push('World Items');
+  if (state.espMines) features.push('Mines/Explosives');
+  if (state.espEmplacements) features.push('Emplacements');
+  if (state.espFOBs) features.push('FOBs');
+  if (state.radar) features.push('Radar');
+  if (state.nightMode) features.push('Night Mode');
+  if (state.fovChanger) features.push('FOV Changer');
+  if (state.crosshair) features.push('Crosshair');
+
+  if (features.length === 0) {
+    right += '<div style="color:rgba(128,128,140,0.7);font-size:13px;">No features active</div>';
+  } else {
+    features.forEach(f => {
+      right += `<div class="bullet-item"><div class="bullet-dot"></div>${f}</div>`;
+    });
+  }
+  document.getElementById('cfg_right').innerHTML = right;
+}
+
+// ============================================
+// SOLDIER DRAWING (exact procedural code)
+// ============================================
+function blend(imgData, x, y, r, g, b, a) {
+  if (x < 0 || x >= imgData.width || y < 0 || y >= imgData.height || a <= 0) return;
+  if (a > 1) a = 1;
+  const i = (y * imgData.width + x) * 4;
+  const d = imgData.data;
+  const da = d[i+3] / 255;
+  const oa = a + da * (1-a);
+  if (oa > 0.001) {
+    d[i] = (r*a + d[i]*da*(1-a)) / oa;
+    d[i+1] = (g*a + d[i+1]*da*(1-a)) / oa;
+    d[i+2] = (b*a + d[i+2]*da*(1-a)) / oa;
+  }
+  d[i+3] = oa * 255;
+}
+function ellipse(img, cx, cy, rx, ry, r, g, b, alpha=1) {
+  const x0 = Math.max(0, Math.floor(cx-rx-1.5));
+  const x1 = Math.min(img.width-1, Math.ceil(cx+rx+1.5));
+  const y0 = Math.max(0, Math.floor(cy-ry-1.5));
+  const y1 = Math.min(img.height-1, Math.ceil(cy+ry+1.5));
+  for (let py=y0;py<=y1;py++) for (let px=x0;px<=x1;px++) {
+    const dx=(px-cx)/rx, dy=(py-cy)/ry, d2=dx*dx+dy*dy;
+    if (d2<1.2) {
+      let aa = d2>0.82 ? (1-(d2-0.82)/0.38) : 1;
+      if (aa>0) blend(img,px,py,r,g,b,aa*alpha);
+    }
+  }
+}
+function rect(img, x0, y0, x1, y1, r, g, b, alpha=1, rad=0) {
+  const ix0=Math.floor(x0-1), ix1=Math.ceil(x1+1), iy0=Math.floor(y0-1), iy1=Math.ceil(y1+1);
+  for (let py=iy0;py<=iy1;py++) for (let px=ix0;px<=ix1;px++) {
+    let aa=1;
+    if (rad>0) {
+      let cx2 = px<x0+rad ? x0+rad : px>x1-rad ? x1-rad : px;
+      let cy2 = py<y0+rad ? y0+rad : py>y1-rad ? y1-rad : py;
+      let d = Math.sqrt((px-cx2)**2+(py-cy2)**2);
+      if (d>rad+0.7) continue;
+      if (d>rad-0.7) aa=(rad+0.7-d)/1.4;
+    } else {
+      if (px<x0-0.5||px>x1+0.5||py<y0-0.5||py>y1+0.5) continue;
+      if (px<x0+0.5) aa*=px-x0+0.5;
+      if (px>x1-0.5) aa*=x1-px+0.5;
+      if (py<y0+0.5) aa*=py-y0+0.5;
+      if (py>y1-0.5) aa*=y1-py+0.5;
+    }
+    if (aa>0) blend(img,px,py,r,g,b,aa*alpha);
+  }
+}
+function trap(img, topY, botY, topL, topR, botL, botR, r, g, b, alpha=1) {
+  const iy0=Math.floor(topY-1), iy1=Math.ceil(botY+1);
+  for (let py=iy0;py<=iy1;py++) {
+    let t=(py-topY)/(botY-topY);
+    if (t<-0.01||t>1.01) continue;
+    t=Math.max(0,Math.min(1,t));
+    const xl=topL+(botL-topL)*t, xr=topR+(botR-topR)*t;
+    let yaa=1;
+    if (py<topY+0.5) yaa=py-topY+0.5;
+    if (py>botY-0.5) yaa=botY-py+0.5;
+    if (yaa<=0) continue;
+    for (let px=Math.floor(xl-1);px<=Math.ceil(xr+1);px++) {
+      let xaa=1;
+      if (px<xl+0.5) xaa=px-xl+0.5;
+      if (px>xr-0.5) xaa*=xr-px+0.5;
+      if (xaa>0) blend(img,px,py,r,g,b,xaa*yaa*alpha);
+    }
+  }
+}
+function drawSoldier(ctx) {
+  const W=160,H=400;
+  const img = ctx.createImageData(W,H);
+  const cx=W*0.5;
+  const gMain={r:72,g:78,b:65}, gDark={r:48,g:52,b:44}, gLight={r:92,g:98,b:82};
+  const gVest={r:62,g:68,b:56}, gBoot={r:40,g:36,b:32}, gSkin={r:95,g:80,b:68};
+  const gMask={r:55,g:50,b:45}, gGoggle={r:28,g:32,b:40};
+  const gWeapon={r:45,g:42,b:38}, gWepLt={r:65,g:60,b:55}, shadow={r:20,g:22,b:18};
+  // LEGS
+  trap(img,190,268,cx-22,cx-6,cx-20,cx-8,gMain.r,gMain.g,gMain.b);
+  ellipse(img,cx-14,192,10,6,gMain.r,gMain.g,gMain.b);
+  trap(img,190,268,cx+6,cx+22,cx+8,cx+20,gMain.r,gMain.g,gMain.b);
+  ellipse(img,cx+14,192,10,6,gMain.r,gMain.g,gMain.b);
+  trap(img,196,260,cx-20,cx-9,cx-18,cx-10,gLight.r,gLight.g,gLight.b,0.3);
+  trap(img,196,260,cx+9,cx+20,cx+10,cx+18,gLight.r,gLight.g,gLight.b,0.3);
+  rect(img,cx-22,220,cx-12,240,gDark.r,gDark.g,gDark.b,0.6,2);
+  rect(img,cx+12,220,cx+22,240,gDark.r,gDark.g,gDark.b,0.6,2);
+  ellipse(img,cx-14,268,10,8,gDark.r,gDark.g,gDark.b);
+  ellipse(img,cx+14,268,10,8,gDark.r,gDark.g,gDark.b);
+  ellipse(img,cx-14,267,8,6,gMain.r,gMain.g,gMain.b,0.7);
+  ellipse(img,cx+14,267,8,6,gMain.r,gMain.g,gMain.b,0.7);
+  trap(img,274,340,cx-19,cx-7,cx-17,cx-9,gMain.r,gMain.g,gMain.b);
+  trap(img,274,340,cx+7,cx+19,cx+9,cx+17,gMain.r,gMain.g,gMain.b);
+  trap(img,278,336,cx-17,cx-9,cx-15,cx-11,gLight.r,gLight.g,gLight.b,0.25);
+  trap(img,278,336,cx+9,cx+17,cx+11,cx+15,gLight.r,gLight.g,gLight.b,0.25);
+  rect(img,cx-20,336,cx-4,358,gBoot.r,gBoot.g,gBoot.b,1,3);
+  rect(img,cx+4,336,cx+20,358,gBoot.r,gBoot.g,gBoot.b,1,3);
+  rect(img,cx-21,352,cx-3,362,shadow.r,shadow.g,shadow.b,0.9,2);
+  rect(img,cx+3,352,cx+21,362,shadow.r,shadow.g,shadow.b,0.9,2);
+  for (let i=0;i<3;i++) { const ly=340+i*5; rect(img,cx-18,ly,cx-6,ly+1.5,shadow.r,shadow.g,shadow.b,0.4); rect(img,cx+6,ly,cx+18,ly+1.5,shadow.r,shadow.g,shadow.b,0.4); }
+  trap(img,74,130,cx-36,cx+36,cx-30,cx+30,gMain.r,gMain.g,gMain.b);
+  trap(img,130,188,cx-30,cx+30,cx-22,cx+22,gMain.r,gMain.g,gMain.b);
+  trap(img,80,125,cx-10,cx+10,cx-8,cx+8,gLight.r,gLight.g,gLight.b,0.2);
+  trap(img,78,185,cx-36,cx-28,cx-24,cx-18,shadow.r,shadow.g,shadow.b,0.25);
+  trap(img,78,185,cx+28,cx+36,cx+18,cx+24,shadow.r,shadow.g,shadow.b,0.25);
+  rect(img,cx-24,80,cx+24,170,gVest.r,gVest.g,gVest.b,0.85,4);
+  trap(img,72,90,cx-24,cx-14,cx-22,cx-14,gVest.r,gVest.g,gVest.b,0.9);
+  trap(img,72,90,cx+14,cx+24,cx+14,cx+22,gVest.r,gVest.g,gVest.b,0.9);
+  rect(img,cx-20,100,cx+20,160,gDark.r,gDark.g,gDark.b,0.35,3);
+  for (let i=0;i<5;i++) { const wy=104+i*12; rect(img,cx-18,wy,cx+18,wy+1.2,shadow.r,shadow.g,shadow.b,0.3); }
+  for (let i=-1;i<=1;i++) { const px2=cx+i*14-5; rect(img,px2,145,px2+11,168,gDark.r,gDark.g,gDark.b,0.8,2); rect(img,px2+1,146,px2+10,148,shadow.r,shadow.g,shadow.b,0.5); rect(img,px2+2,146,px2+9,152,gWeapon.r,gWeapon.g,gWeapon.b,0.5,1); }
+  rect(img,cx-34,88,cx-24,155,gDark.r,gDark.g,gDark.b,0.5,2);
+  rect(img,cx+24,88,cx+34,155,gDark.r,gDark.g,gDark.b,0.5,2);
+  rect(img,cx-10,82,cx+10,98,gDark.r,gDark.g,gDark.b,0.5,2);
+  rect(img,cx-26,178,cx+26,192,gDark.r,gDark.g,gDark.b,0.8,2);
+  rect(img,cx-4,180,cx+4,190,gWepLt.r,gWepLt.g,gWepLt.b,0.6,1);
+  rect(img,cx+20,180,cx+32,210,gDark.r,gDark.g,gDark.b,0.7,2);
+  rect(img,cx+22,182,cx+30,198,gWeapon.r,gWeapon.g,gWeapon.b,0.5,1);
+  trap(img,76,138,cx-48,cx-34,cx-44,cx-30,gMain.r,gMain.g,gMain.b);
+  trap(img,80,134,cx-46,cx-37,cx-42,cx-33,gLight.r,gLight.g,gLight.b,0.2);
+  ellipse(img,cx-37,138,9,7,gDark.r,gDark.g,gDark.b,0.8);
+  trap(img,142,200,cx-43,cx-30,cx-40,cx-28,gMain.r,gMain.g,gMain.b);
+  trap(img,146,196,cx-41,cx-33,cx-38,cx-30,gLight.r,gLight.g,gLight.b,0.2);
+  ellipse(img,cx-34,202,8,6,gDark.r,gDark.g,gDark.b);
+  trap(img,76,138,cx+34,cx+48,cx+30,cx+44,gMain.r,gMain.g,gMain.b);
+  trap(img,80,134,cx+37,cx+46,cx+33,cx+42,gLight.r,gLight.g,gLight.b,0.2);
+  ellipse(img,cx+37,138,9,7,gDark.r,gDark.g,gDark.b,0.8);
+  trap(img,142,200,cx+30,cx+43,cx+28,cx+40,gMain.r,gMain.g,gMain.b);
+  trap(img,146,196,cx+33,cx+41,cx+30,cx+38,gLight.r,gLight.g,gLight.b,0.2);
+  ellipse(img,cx+34,202,8,6,gDark.r,gDark.g,gDark.b);
+  rect(img,cx-46,86,cx-36,100,gDark.r+15,gDark.g+10,gDark.b,0.4,1);
+  trap(img,130,138,cx-50,cx-44,cx+30,cx+36,gWeapon.r,gWeapon.g,gWeapon.b,0.85);
+  rect(img,cx-10,126,cx+18,142,gWeapon.r,gWeapon.g,gWeapon.b,0.8,2);
+  trap(img,128,142,cx+16,cx+22,cx+38,cx+44,gWeapon.r,gWeapon.g,gWeapon.b,0.75);
+  rect(img,cx-2,140,cx+8,162,gWeapon.r,gWeapon.g,gWeapon.b,0.7,1);
+  rect(img,cx-52,131,cx-46,137,shadow.r,shadow.g,shadow.b,0.7,1);
+  rect(img,cx-4,120,cx+12,128,gWeapon.r+8,gWeapon.g+8,gWeapon.b+8,0.7,2);
+  ellipse(img,cx-4,124,3,3.5,gGoggle.r,gGoggle.g,gGoggle.b,0.6);
+  rect(img,cx-48,131,cx+28,133,gWepLt.r,gWepLt.g,gWepLt.b,0.15);
+  rect(img,cx-24,138,cx-18,148,gWeapon.r,gWeapon.g,gWeapon.b,0.7,1);
+  trap(img,56,78,cx-10,cx+10,cx-12,cx+12,gMask.r,gMask.g,gMask.b);
+  ellipse(img,cx,32,22,24,gDark.r,gDark.g,gDark.b);
+  ellipse(img,cx,30,21,23,gMain.r,gMain.g,gMain.b);
+  ellipse(img,cx,24,12,14,gLight.r,gLight.g,gLight.b,0.35);
+  rect(img,cx-24,40,cx+24,46,gDark.r,gDark.g,gDark.b,0.9,2);
+  rect(img,cx-7,6,cx+7,18,gDark.r,gDark.g,gDark.b,0.8,2);
+  rect(img,cx-3,2,cx+3,8,shadow.r,shadow.g,shadow.b,0.7,1);
+  ellipse(img,cx-4,10,3,4,shadow.r,shadow.g,shadow.b,0.6);
+  ellipse(img,cx+4,10,3,4,shadow.r,shadow.g,shadow.b,0.6);
+  ellipse(img,cx-22,36,5,8,gDark.r,gDark.g,gDark.b,0.8);
+  ellipse(img,cx+22,36,5,8,gDark.r,gDark.g,gDark.b,0.8);
+  rect(img,cx-22,22,cx-20,36,gDark.r,gDark.g,gDark.b,0.5);
+  rect(img,cx+20,22,cx+22,36,gDark.r,gDark.g,gDark.b,0.5);
+  ellipse(img,cx,44,14,10,gMask.r,gMask.g,gMask.b);
+  rect(img,cx-15,38,cx+15,46,gGoggle.r,gGoggle.g,gGoggle.b,0.85,3);
+  ellipse(img,cx-7,42,5,3,40,45,55,0.6);
+  ellipse(img,cx+7,42,5,3,40,45,55,0.6);
+  ellipse(img,cx-8,41,2,1.5,80,90,110,0.3);
+  ellipse(img,cx+6,41,2,1.5,80,90,110,0.3);
+  rect(img,cx-18,18,cx-6,26,gDark.r+10,gDark.g+8,gDark.b+5,0.35,1);
+  rect(img,cx+6,18,cx+18,26,gDark.r-5,gDark.g-5,gDark.b-5,0.4,1);
+  rect(img,cx+7,19,cx+12,25,gMain.r+20,gMain.g+15,gMain.b+10,0.25);
+  ctx.putImageData(img,0,0);
+}
+
+// Cache the soldier texture as an offscreen canvas
+let soldierCache = null;
+function getSoldierImage() {
+  if (soldierCache) return soldierCache;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 160;
+  offscreen.height = 400;
+  const octx = offscreen.getContext('2d');
+  drawSoldier(octx);
+  soldierCache = offscreen;
+  return offscreen;
+}
+
+// ============================================
+// ESP PREVIEW DRAWING
+// ============================================
+function drawESPPreview() {
+  const bg = document.getElementById('espPreviewBg');
+  const canvas = document.getElementById('espCanvas');
+  if (!bg || !canvas) return;
+
+  const w = bg.clientWidth;
+  const h = bg.clientHeight;
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  // Ground line
+  const groundY = h * 0.92;
+  ctx.strokeStyle = 'rgba(40,40,50,0.39)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(10, groundY);
+  ctx.lineTo(w - 10, groundY);
+  ctx.stroke();
+  // Ground ticks
+  for (let i = 0; i < 7; i++) {
+    const x0 = w * (0.15 + i * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(x0, groundY - 4);
+    ctx.lineTo(x0, groundY + 4);
+    ctx.strokeStyle = 'rgba(40,40,50,0.31)';
+    ctx.stroke();
+  }
+
+  if (!state.esp) {
+    ctx.fillStyle = 'rgba(100,100,110,0.78)';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ESP OFF', w/2, h/2);
+    return;
+  }
+
+  // Soldier positioning
+  const figTop = 14;
+  const figH = h - 36;
+  const texAR = 160 / 400;
+  const imgH = figH;
+  const imgW = imgH * texAR;
+  const imgL = (w - imgW) / 2;
+  const cxF = w / 2;
+
+  // Draw soldier texture
+  const soldierImg = getSoldierImage();
+  ctx.drawImage(soldierImg, imgL, figTop, imgW, imgH);
+
+  // Joint position helper
+  function P(tx, ty) {
+    return { x: imgL + imgW * tx, y: figTop + imgH * ty };
+  }
+
+  const joints = {
+    head: P(0.50, 0.055),
+    neck: P(0.50, 0.13),
+    spine3: P(0.50, 0.19),
+    lShldr: P(0.28, 0.19),
+    rShldr: P(0.72, 0.19),
+    pelvis: P(0.50, 0.48),
+    lElbow: P(0.22, 0.34),
+    lHand: P(0.30, 0.46),
+    rElbow: P(0.78, 0.34),
+    rHand: P(0.70, 0.46),
+    lHip: P(0.42, 0.50),
+    rHip: P(0.58, 0.50),
+    lKnee: P(0.40, 0.70),
+    rKnee: P(0.58, 0.70),
+    lFoot: P(0.38, 0.92),
+    rFoot: P(0.60, 0.92)
+  };
+
+  const headR = imgH * 0.06;
+  const bootH = imgH * 0.025;
+  const sc = figH / 300;
+
+  const boxTop = joints.head.y - headR - 4;
+  const boxBot = joints.lFoot.y + bootH + 4;
+  const boxWHalf = imgW * 0.5 + 4;
+  const boxLeft = cxF - boxWHalf;
+  const boxRight = cxF + boxWHalf;
+  const boxHeight = boxBot - boxTop;
+
+  // Bounding box
+  if (state.espBoxes) {
+    // Black outline
+    ctx.strokeStyle = 'rgba(0,0,0,0.39)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(boxLeft - 1, boxTop - 1, (boxRight - boxLeft) + 2, (boxBot - boxTop) + 2);
+    // Yellow box
+    ctx.strokeStyle = '#ffff33';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(boxLeft, boxTop, boxRight - boxLeft, boxBot - boxTop);
+  }
+
+  // Skeleton
+  if (state.espSkeleton) {
+    const skelColor = '#ffe619';
+    ctx.strokeStyle = skelColor;
+    ctx.lineWidth = 1.5;
+
+    const connections = [
+      ['head', 'neck'], ['neck', 'spine3'], ['spine3', 'pelvis'],
+      ['spine3', 'lShldr'], ['lShldr', 'lElbow'], ['lElbow', 'lHand'],
+      ['spine3', 'rShldr'], ['rShldr', 'rElbow'], ['rElbow', 'rHand'],
+      ['pelvis', 'lHip'], ['lHip', 'lKnee'], ['lKnee', 'lFoot'],
+      ['pelvis', 'rHip'], ['rHip', 'rKnee'], ['rKnee', 'rFoot']
+    ];
+
+    connections.forEach(([a, b]) => {
+      ctx.beginPath();
+      ctx.moveTo(joints[a].x, joints[a].y);
+      ctx.lineTo(joints[b].x, joints[b].y);
+      ctx.stroke();
+    });
+
+    // Joint dots
+    ctx.fillStyle = skelColor;
+    Object.values(joints).forEach(j => {
+      ctx.beginPath();
+      ctx.arc(j.x, j.y, 2.5 * sc, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // Health bar
+  if (state.espHealth) {
+    const hpFrac = 0.75;
+    const barH = boxHeight * hpFrac;
+    const rr = Math.round((1 - hpFrac) * 255);
+    const gg = Math.round(hpFrac * 255);
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.47)';
+    ctx.fillRect(boxLeft - 7, boxTop, 4, boxBot - boxTop);
+    // Health fill
+    ctx.fillStyle = `rgb(${rr},${gg},30)`;
+    ctx.fillRect(boxLeft - 7, boxBot - barH, 4, barH);
+    // Border
+    ctx.strokeStyle = 'rgba(0,0,0,0.63)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(boxLeft - 7, boxTop, 4, boxBot - boxTop);
+  }
+
+  // Head dot
+  if (state.espHeadDot) {
+    ctx.fillStyle = 'rgba(255,50,50,0.9)';
+    ctx.beginPath();
+    ctx.arc(joints.head.x, joints.head.y, 4 * sc, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Player name
+  if (state.espName) {
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillText('Player', cxF + 1, boxTop - 3);
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Player', cxF, boxTop - 4);
+  }
+
+  // Distance
+  if (state.espDistance) {
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillText('42m', cxF + 1, boxBot + 14);
+    // Text
+    ctx.fillStyle = 'rgba(220,220,220,0.9)';
+    ctx.fillText('42m', cxF, boxBot + 13);
+  }
+
+  // Snaplines
+  if (state.espSnaplines) {
+    ctx.strokeStyle = 'rgba(255,255,51,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cxF, h);
+    ctx.lineTo(cxF, boxBot);
+    ctx.stroke();
+  }
+}
+
+// ============================================
+// REBUILD ALL
+// ============================================
+function rebuildAll() {
+  buildCombatTab();
+  buildVisualsTab();
+  buildMiscTab();
+  buildSettingsTab();
+}
+
+// Init
+rebuildAll();
+
+// Redraw ESP preview on resize
+window.addEventListener('resize', () => {
+  requestAnimationFrame(drawESPPreview);
+});
+</script>
+</body>
+</html>

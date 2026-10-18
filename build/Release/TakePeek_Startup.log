@@ -1,0 +1,8 @@
+[Wed Sep 16 19:21:17 2026] === TakePeek WD starting ===
+[Wed Sep 16 19:21:17 2026] DynAPI initialized
+[Wed Sep 16 19:21:17 2026] Protection layer active
+[Wed Sep 16 19:21:17 2026] Auth: creating window...
+[Wed Sep 16 19:21:17 2026] Auth: DX11 init OK
+[Wed Sep 16 19:21:17 2026] Auth: window visible — calling InitAuth
+[Wed Sep 16 19:21:17 2026] Auth: entering auth loop
+[Wed Sep 16 19:21:20 2026] Auth phase cancelled/failed

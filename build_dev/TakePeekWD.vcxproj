@@ -1,0 +1,414 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7D22E507-3A22-376F-9CAA-B7C869B37885}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>TakePeekWD</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TakePeekWD.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TakePeekWD</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TakePeekWD.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TakePeekWD</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">TakePeekWD.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">TakePeekWD</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">TakePeekWD.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">TakePeekWD</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;advapi32.lib;Normaliz.lib;wldap32.lib;crypt32.lib;Ws2_32.lib;ntdll.lib;winhttp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl/$(Configuration);C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/Debug/TakePeekWD.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/Debug/TakePeekWD.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;advapi32.lib;Normaliz.lib;wldap32.lib;crypt32.lib;Ws2_32.lib;ntdll.lib;winhttp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl/$(Configuration);C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/Release/TakePeekWD.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/Release/TakePeekWD.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;advapi32.lib;Normaliz.lib;wldap32.lib;crypt32.lib;Ws2_32.lib;ntdll.lib;winhttp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl/$(Configuration);C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/MinSizeRel/TakePeekWD.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/MinSizeRel/TakePeekWD.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEV_AUTH_STUB;KDLIBMODE;DISABLE_OUTPUT;CURL_STATICLIB;SODIUM_STATIC;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\Cheat\vendor\imgui;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\SDK;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Driver;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\include;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\curl;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\libsodium;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\..\TakePeek 2.0 Project\ThirdParty\KeyAuth\nlohmann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;advapi32.lib;Normaliz.lib;wldap32.lib;crypt32.lib;Ws2_32.lib;ntdll.lib;winhttp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/curl/$(Configuration);C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium;C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/../TakePeek 2.0 Project/ThirdParty/KeyAuth/libsodium/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <EnableUAC>true</EnableUAC>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/RelWithDebInfo/TakePeekWD.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build/RelWithDebInfo/TakePeekWD.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs" "-BC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev" --check-stamp-file "C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs" "-BC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev" --check-stamp-file "C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs" "-BC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev" --check-stamp-file "C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs" "-BC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev" --check-stamp-file "C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_dev/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Overlay\src\main.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\Auth\auth_stub.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui_draw.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui_tables.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 Project\Cheat\vendor\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\intel_driver.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\kdmapper.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\portable_executable.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\service.cpp" />
+    <ClCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\kdmapper\utils.cpp" />
+    <ResourceCompile Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\resource.rc" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_dev\ZERO_CHECK.vcxproj">
+      <Project>{CF5F8C6A-6674-302E-B0E1-6E1FE016C598}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Administrator\Downloads\TakePeek 2.0 WarDogs\build_unbranded\CMakeFiles\34953ec6ee679cd41ff70eb23067043d\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{A16CE1B3-6424-3EEE-84C0-C87DE82B3343}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

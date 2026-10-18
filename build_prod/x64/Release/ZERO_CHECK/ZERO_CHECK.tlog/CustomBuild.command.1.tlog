@@ -1,0 +1,10 @@
+^C:\USERS\ADMINISTRATOR\DOWNLOADS\TAKEPEEK 2.0 WARDOGS\BUILD_PROD\CMAKEFILES\AC3781501C500B6120B9CB96207ED2B0\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs" "-BC:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_prod" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/Administrator/Downloads/TakePeek 2.0 WarDogs/build_prod/TakePeekWD.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
