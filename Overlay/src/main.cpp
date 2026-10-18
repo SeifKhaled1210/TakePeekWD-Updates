@@ -3423,7 +3423,7 @@ static void UpdatePlayers() {
     float tickDt = std::chrono::duration<float>(tickNow - s_prevTickTime).count();
 
     static std::unordered_map<uintptr_t, bool> s_factionCache;
-    static std::unordered_map<uintptr_t, bool> s_persistentDeath;
+    static std::unordered_map<uintptr_t, std::chrono::steady_clock::time_point> s_persistentDeath;
     struct DeadCache { PlayerData data; std::chrono::steady_clock::time_point deathTime; };
     static std::unordered_map<uintptr_t, DeadCache> s_deadPlayerCache;
     struct VisTrack { float prevLrt; std::chrono::steady_clock::time_point lastVisTime; };
@@ -3581,9 +3581,11 @@ static void UpdatePlayers() {
                     }
                 }
             }
-            if (p.isDead) s_persistentDeath[actor] = true;
-            else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
+            if (p.isDead) s_persistentDeath.emplace(actor, tickNow);
+            else if (s_persistentDeath.count(actor)) {
+                float deathAge = std::chrono::duration<float>(tickNow - s_persistentDeath[actor]).count();
+                if (deathAge > 1.5f && p.bleedoutState == 0 && p.healthValid && p.health > 50.f)
+                    s_persistentDeath.erase(actor);
                 else p.isDead = true;
             }
             if (p.isDead) dbgDead++;
@@ -3910,9 +3912,11 @@ static void UpdatePlayers() {
                         }
                     }
                 }
-                if (p.isDead) s_persistentDeath[actor] = true;
-                else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                    if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
+                if (p.isDead) s_persistentDeath.emplace(actor, tickNow);
+                else if (s_persistentDeath.count(actor)) {
+                    float deathAge = std::chrono::duration<float>(tickNow - s_persistentDeath[actor]).count();
+                    if (deathAge > 1.5f && p.bleedoutState == 0 && p.healthValid && p.health > 50.f)
+                        s_persistentDeath.erase(actor);
                     else p.isDead = true;
                 }
                 p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
@@ -4253,20 +4257,22 @@ static void UpdatePlayers() {
                             if (inlineTag) vTag = inlineTag;
                         }
                         if (vTag) {
-                            if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath[actor] = true; }
+                            if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath.emplace(actor, tickNow); }
                             else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
                             else if (vTag != s_aliveTagId) {
                                 std::string tagName = ResolveFName((int32_t)vTag);
-                                if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath[actor] = true; }
+                                if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath.emplace(actor, tickNow); }
                                 else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
                                 else s_aliveTagId = vTag;
                             }
                         }
                     }
 
-                    if (p.isDead) s_persistentDeath[actor] = true;
-                    else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                        if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
+                    if (p.isDead) s_persistentDeath.emplace(actor, tickNow);
+                    else if (s_persistentDeath.count(actor)) {
+                        float deathAge = std::chrono::duration<float>(tickNow - s_persistentDeath[actor]).count();
+                        if (deathAge > 1.5f && p.bleedoutState == 0 && p.healthValid && p.health > 50.f)
+                            s_persistentDeath.erase(actor);
                         else p.isDead = true;
                     }
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
@@ -4567,20 +4573,22 @@ static void UpdatePlayers() {
                             if (inlineTag) vTag = inlineTag;
                         }
                         if (vTag) {
-                            if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath[actor] = true; }
+                            if (s_deadTagId && vTag == s_deadTagId) { p.isDead = true; s_persistentDeath.emplace(actor, tickNow); }
                             else if (s_dbnoTagId && vTag == s_dbnoTagId) p.isDowned = true;
                             else if (vTag != s_aliveTagId) {
                                 std::string tagName = ResolveFName((int32_t)vTag);
-                                if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath[actor] = true; }
+                                if (tagName.find("Dead") != std::string::npos) { s_deadTagId = vTag; p.isDead = true; s_persistentDeath.emplace(actor, tickNow); }
                                 else if (tagName.find("DBNO") != std::string::npos || tagName.find("Down") != std::string::npos || tagName.find("Critical") != std::string::npos) { s_dbnoTagId = vTag; p.isDowned = true; }
                                 else s_aliveTagId = vTag;
                             }
                         }
                     }
 
-                    if (p.isDead) s_persistentDeath[actor] = true;
-                    else if (s_persistentDeath.count(actor) && s_persistentDeath[actor]) {
-                        if (p.bleedoutState == 0 || (p.healthValid && p.health > 50.f)) s_persistentDeath.erase(actor);
+                    if (p.isDead) s_persistentDeath.emplace(actor, tickNow);
+                    else if (s_persistentDeath.count(actor)) {
+                        float deathAge = std::chrono::duration<float>(tickNow - s_persistentDeath[actor]).count();
+                        if (deathAge > 1.5f && p.bleedoutState == 0 && p.healthValid && p.health > 50.f)
+                            s_persistentDeath.erase(actor);
                         else p.isDead = true;
                     }
                     p.isADS = Read<uint8_t>(actor + O::WDChar_AimingAlpha) != 0;
