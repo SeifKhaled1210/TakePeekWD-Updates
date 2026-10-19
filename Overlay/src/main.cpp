@@ -766,6 +766,11 @@ static constexpr double DEG2RAD = PI / 180.0;
 static void UpdateCameraView() {
     if (!g_base) return;
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
+    if ((!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) && g_gworldOff != O::GWorld) {
+        gworld = Read<uintptr_t>(g_base + O::GWorld);
+        if (gworld && gworld > 0x10000000 && gworld < 0x7FFFFFFFFFFF)
+            g_gworldOff = O::GWorld;
+    }
     if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) {
         uintptr_t eng = Read<uintptr_t>(g_base + O::GEngine);
         if (eng && eng > 0x10000000 && eng < 0x7FFFFFFFFFFF) {
@@ -1736,6 +1741,13 @@ static uintptr_t PatternScan(uintptr_t start, size_t size,
 }
 
 static bool AutoResolveGlobals() {
+    WriteStartupLog("AutoResolve", "DISABLED — using hardcoded SDK offsets, no scanning");
+    return false;
+
+    // --- DISABLED: scans caused false positive RVA overrides during loading screens ---
+    // The hardcoded offsets in namespace O are correct for the current build.
+    // If the game updates, update O::GWorld and O::GNames manually.
+#if 0
     WriteStartupLog("AutoResolve", "validating GWorld/GNames RVAs, scanning if stale");
 
     int32_t peOff = Read<int32_t>(g_base + 0x3C);
@@ -1800,19 +1812,22 @@ static bool AutoResolveGlobals() {
 
     // Check if the default (SDK) GWorld offset already works
     bool gworldValid = false;
+    bool gworldNull = false;
     {
         uintptr_t val = Read<uintptr_t>(g_base + g_gworldOff);
         if (ValidateGWorld(val)) {
             WriteStartupLog("AutoResolve", "default GWorld offset is valid, skipping GWorld scan");
             gworldValid = true;
+        } else if (val == 0) {
+            gworldNull = true;
+            WriteStartupLog("AutoResolve", "default GWorld reads NULL (loading screen?) — skipping scan, will retry in main loop");
         }
     }
 
-    // --- GWorld via RIP-relative scan: find ALL mov reg,[rip+disp] that resolve to .data section ---
-    // Scan for 48 8B 05/0D/15/1D/25/2D/35/3D XX XX XX XX (mov r64, [rip+disp32])
-    // Filter: resolved address must land in the upper portion of the image (.data/.rdata area)
-    // Then validate the pointer chain
-    if (!gworldValid) {
+    // Only scan if the default RVA reads a NON-NULL pointer that fails validation
+    // (meaning the RVA is genuinely stale). A NULL read is likely a loading screen —
+    // the main loop will pick it up once the game is loaded.
+    if (!gworldValid && !gworldNull) {
         WriteStartupLog("RIP-scan", "scanning .text for mov reg,[rip+disp] resolving near expected GWorld");
         uintptr_t dataStart = imageSize / 2;
         size_t textSize = imageSize < 0x8000000 ? imageSize : 0x8000000;
@@ -1864,7 +1879,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Neighborhood scan: search ±512KB around expected GWorld offset ---
-    if (!gworldValid && !updated) {
+    if (!gworldValid && !gworldNull && !updated) {
         WriteStartupLog("Neighborhood scan", "searching ±512KB around expected GWorld offset");
         const size_t SCAN_RANGE = 0x80000;
         uintptr_t scanStart = (g_gworldOff > SCAN_RANGE) ? (g_gworldOff - SCAN_RANGE) : 0;
@@ -1886,7 +1901,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Full .data section scan: brute-force every 8-byte slot in upper half of image ---
-    if (!gworldValid && !updated) {
+    if (!gworldValid && !gworldNull && !updated) {
         WriteStartupLog("Full data scan", "scanning entire .data section for UWorld pointer");
         uintptr_t dataStart = imageSize / 2;
         if (dataStart < 0x800000) dataStart = 0x800000;
@@ -2039,6 +2054,7 @@ static bool AutoResolveGlobals() {
     }
 
     return updated;
+#endif
 }
 // ============================================================================
 // Mini SDK Dumper — external offset discovery via kernel reads
@@ -3083,6 +3099,11 @@ static void UpdateCamera() {
     static bool s_camChainLogged = false;
 
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
+    if ((!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) && g_gworldOff != O::GWorld) {
+        gworld = Read<uintptr_t>(g_base + O::GWorld);
+        if (gworld && gworld > 0x10000000 && gworld < 0x7FFFFFFFFFFF)
+            g_gworldOff = O::GWorld;
+    }
     if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) {
         uintptr_t eng = Read<uintptr_t>(g_base + O::GEngine);
         if (eng && eng > 0x10000000 && eng < 0x7FFFFFFFFFFF) {
@@ -3398,6 +3419,11 @@ static void UpdatePlayers() {
     if (!g_base) return;
 
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
+    if ((!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) && g_gworldOff != O::GWorld) {
+        gworld = Read<uintptr_t>(g_base + O::GWorld);
+        if (gworld && gworld > 0x10000000 && gworld < 0x7FFFFFFFFFFF)
+            g_gworldOff = O::GWorld;
+    }
     if (!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) {
         uintptr_t engine = Read<uintptr_t>(g_base + O::GEngine);
         if (engine && engine > 0x10000000 && engine < 0x7FFFFFFFFFFF) {
@@ -6705,6 +6731,11 @@ static void DrawDebugHUD() {
     float panelW = 340.f;
 
     uintptr_t gworld = Read<uintptr_t>(g_base + g_gworldOff);
+    if ((!gworld || gworld < 0x10000000 || gworld >= 0x7FFFFFFFFFFF) && g_gworldOff != O::GWorld) {
+        gworld = Read<uintptr_t>(g_base + O::GWorld);
+        if (gworld && gworld > 0x10000000 && gworld < 0x7FFFFFFFFFFF)
+            g_gworldOff = O::GWorld;
+    }
     uintptr_t gameInst = gworld ? Read<uintptr_t>(gworld + O::UWorld_OwningGameInstance) : 0;
     uintptr_t level = gworld ? Read<uintptr_t>(gworld + O::UWorld_PersistentLevel) : 0;
     int32_t actorCnt = level ? Read<int32_t>(level + g_ulevelActorsOff + 8) : 0;
@@ -8624,6 +8655,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 g_gameWnd = FindGameWindow();
 
             uintptr_t testWorld = Read<uintptr_t>(g_base + g_gworldOff);
+            if ((!testWorld || testWorld < 0x10000 || testWorld >= 0x7FFFFFFFFFFF) && g_gworldOff != O::GWorld) {
+                testWorld = Read<uintptr_t>(g_base + O::GWorld);
+                if (testWorld && testWorld > 0x10000 && testWorld < 0x7FFFFFFFFFFF)
+                    g_gworldOff = O::GWorld;
+            }
             if (testWorld && testWorld > 0x10000 && testWorld < 0x7FFFFFFFFFFF) {
                 uintptr_t level = Read<uintptr_t>(testWorld + 0x30);
                 if (level && level > 0x10000 && level < 0x7FFFFFFFFFFF) {
