@@ -71,11 +71,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM,
 // Structural offsets are stable across patches
 // ============================================================================
 namespace O {
-    // --- Globals (patch-dependent — last updated Oct 18 2026, build 516586) ---
+    // --- Globals (patch-dependent — last updated Oct 19 2026, build 516586, Dumper-7 SDK) ---
     // Globals WILL change with the next game patch — pattern scan runs at startup as fallback.
-    constexpr uintptr_t GWorld   = 0x0D0E0E98;
-    constexpr uintptr_t GNames   = 0x0CE81F30;
-    constexpr uintptr_t GObjects = 0x0CF54760;
+    constexpr uintptr_t GWorld   = 0x0D2AFC08;
+    constexpr uintptr_t GNames   = 0x0D050CB0;
+    constexpr uintptr_t GObjects = 0x0D1234E0;
     constexpr uintptr_t GEngine  = 0x0D0E4150;
 
     // --- Engine functions (RVAs from game base) ---
@@ -156,7 +156,7 @@ namespace O {
     constexpr uintptr_t PS_CompressedPing    = 0x2C0;  // uint8
     constexpr uintptr_t PS_bIsABot           = 0x2C2;  // bool (bitfield byte — bIsABot)
     constexpr uintptr_t PS_PawnPrivate       = 0x330;
-    constexpr uintptr_t PS_PlayerNamePrivate = 0x3D8;  // FString — AWDPlayerState PublicName (estimate -0x58; base APlayerState::PlayerNamePrivate at 0x350)
+    constexpr uintptr_t PS_PlayerNamePrivate = 0x350;  // FString — APlayerState::PlayerNamePrivate (Dumper-7 confirmed)
 
     // --- USceneComponent ---
     constexpr uintptr_t Scene_RelativeLocation = 0x168; // FVector (3 x double)
@@ -175,8 +175,8 @@ namespace O {
     constexpr uintptr_t CMC_MaxWalkSpeed       = 0x2A8; // float
     constexpr uintptr_t CMC_MaxWalkSpeedCrouched = 0x2AC; // float
 
-    // --- ABHMoverPawn (parent of AWDMoverCharacter, build 516586 -0x10 shift) ---
-    constexpr uintptr_t BHPawn_MoverComponent  = 0x378; // UBHPawnMoverComponent* (Mover plugin, NOT UCharacterMovementComponent)
+    // --- ABHMoverPawn (parent of AWDMoverCharacter, build 516586, Dumper-7 verified) ---
+    constexpr uintptr_t BHPawn_MoverComponent  = 0x388; // UBHPawnMoverComponent* (Mover plugin, NOT UCharacterMovementComponent)
 
     // --- UWDCharacterAnimInstance (stance booleans, deob confirmed) ---
     constexpr uintptr_t AnimInst_SprintOrTacSprint  = 0xC3A; // bool — bSprintOrTacSprint
@@ -184,13 +184,13 @@ namespace O {
     constexpr uintptr_t AnimInst_StanceCrouch       = 0xC45; // bool — IsActiveStanceCrouch
     constexpr uintptr_t AnimInst_StanceStand        = 0xC46; // bool — IsActiveStanceStand
 
-    // --- AWDMoverCharacter (build 516586, -0x10 uniform shift from Season 2) ---
-    constexpr uintptr_t WDChar_CharacterMesh    = 0x390; // UBHSkeletalMeshComponentBudgeted* [verified 7/7]
-    constexpr uintptr_t WDChar_MeshFallback1    = 0x578; // Fallback mesh (estimate -0x10)
-    constexpr uintptr_t WDChar_VitalityComponent = 0x738; // WDCharacterVitalityComponent* [verified 7/7]
-    constexpr uintptr_t WDChar_InventoryComponent = 0x748; // UWDPlayerInventoryComponent* [verified 7/7]
-    constexpr uintptr_t WDChar_VehicleOperator   = 0x758; // UWDVehicleOperatorComponent* [verified 7/7]
-    constexpr uintptr_t WDChar_CameraManagerRef  = 0xBA8; // FirstPersonCamera [verified 7/7]
+    // --- AWDMoverCharacter (build 516586, Dumper-7 verified) ---
+    constexpr uintptr_t WDChar_CharacterMesh    = 0x3A0; // UBHSkeletalMeshComponentBudgeted* (ABHMoverPawn::CharacterMeshComponent)
+    constexpr uintptr_t WDChar_MeshFallback1    = 0x588; // Fallback mesh (non-reflected, +0x10 pattern)
+    constexpr uintptr_t WDChar_VitalityComponent = 0x748; // WDCharacterVitalityComponent*
+    constexpr uintptr_t WDChar_InventoryComponent = 0x758; // UWDPlayerInventoryComponent*
+    constexpr uintptr_t WDChar_VehicleOperator   = 0x768; // UWDVehicleOperatorComponent*
+    constexpr uintptr_t WDChar_CameraManagerRef  = 0xBB8; // FirstPersonCamera (non-reflected, +0x10 pattern)
 
     // --- UWDVitalityComponent (new SDK confirmed) ---
     // 0x130 = BaseHealth (float) — NOT current health! It's the initial/max base value.
@@ -369,7 +369,7 @@ namespace O {
     constexpr uintptr_t BHPawn_RemoteViewYaw           = 0x3D0; // uint16 — compressed replicated yaw (estimate -0x10)
 
     // --- Player Clan Tag (AWDPlayerState — build 516586, estimate -0x58) ---
-    constexpr uintptr_t PS_PlayerClanTag = 0x3B8; // FString — player's clan tag (estimate -0x58)
+    constexpr uintptr_t PS_PlayerClanTag = 0x410; // FString — AWDPlayerState::PlayerClanTag (Dumper-7 confirmed)
 
     // --- Inventory / Equipment (build 516586) ---
     constexpr uintptr_t WDChar_InventoryComp = 0x748; // UWDPlayerInventoryComponent* [verified 7/7]
@@ -1741,13 +1741,6 @@ static uintptr_t PatternScan(uintptr_t start, size_t size,
 }
 
 static bool AutoResolveGlobals() {
-    WriteStartupLog("AutoResolve", "DISABLED — using hardcoded SDK offsets, no scanning");
-    return false;
-
-    // --- DISABLED: scans caused false positive RVA overrides during loading screens ---
-    // The hardcoded offsets in namespace O are correct for the current build.
-    // If the game updates, update O::GWorld and O::GNames manually.
-#if 0
     WriteStartupLog("AutoResolve", "validating GWorld/GNames RVAs, scanning if stale");
 
     int32_t peOff = Read<int32_t>(g_base + 0x3C);
@@ -1812,22 +1805,17 @@ static bool AutoResolveGlobals() {
 
     // Check if the default (SDK) GWorld offset already works
     bool gworldValid = false;
-    bool gworldNull = false;
     {
         uintptr_t val = Read<uintptr_t>(g_base + g_gworldOff);
         if (ValidateGWorld(val)) {
             WriteStartupLog("AutoResolve", "default GWorld offset is valid, skipping GWorld scan");
             gworldValid = true;
         } else if (val == 0) {
-            gworldNull = true;
-            WriteStartupLog("AutoResolve", "default GWorld reads NULL (loading screen?) — skipping scan, will retry in main loop");
+            WriteStartupLog("AutoResolve", "default GWorld reads NULL — scanning (offset may be wrong)");
         }
     }
 
-    // Only scan if the default RVA reads a NON-NULL pointer that fails validation
-    // (meaning the RVA is genuinely stale). A NULL read is likely a loading screen —
-    // the main loop will pick it up once the game is loaded.
-    if (!gworldValid && !gworldNull) {
+    if (!gworldValid) {
         WriteStartupLog("RIP-scan", "scanning .text for mov reg,[rip+disp] resolving near expected GWorld");
         uintptr_t dataStart = imageSize / 2;
         size_t textSize = imageSize < 0x8000000 ? imageSize : 0x8000000;
@@ -1879,7 +1867,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Neighborhood scan: search ±512KB around expected GWorld offset ---
-    if (!gworldValid && !gworldNull && !updated) {
+    if (!gworldValid && !updated) {
         WriteStartupLog("Neighborhood scan", "searching ±512KB around expected GWorld offset");
         const size_t SCAN_RANGE = 0x80000;
         uintptr_t scanStart = (g_gworldOff > SCAN_RANGE) ? (g_gworldOff - SCAN_RANGE) : 0;
@@ -1901,7 +1889,7 @@ static bool AutoResolveGlobals() {
     }
 
     // --- Full .data section scan: brute-force every 8-byte slot in upper half of image ---
-    if (!gworldValid && !gworldNull && !updated) {
+    if (!gworldValid && !updated) {
         WriteStartupLog("Full data scan", "scanning entire .data section for UWorld pointer");
         uintptr_t dataStart = imageSize / 2;
         if (dataStart < 0x800000) dataStart = 0x800000;
@@ -2054,7 +2042,6 @@ static bool AutoResolveGlobals() {
     }
 
     return updated;
-#endif
 }
 // ============================================================================
 // Mini SDK Dumper — external offset discovery via kernel reads
