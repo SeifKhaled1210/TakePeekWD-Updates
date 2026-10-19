@@ -209,20 +209,20 @@ namespace O {
     constexpr uintptr_t AttrRepData_CurrentValue = 0x20;  // double
     constexpr int       AttrRepData_Stride       = 0x38;  // sizeof(FBHGameplayAttributeRepData)
 
-    // --- Faction / Team / Squad (build 516586: PlayerStateSession shifted -0x58) ---
-    constexpr uintptr_t PS_FactionComponent = 0x548; // WDFactionComponent* [verified 99/99]
+    // --- Faction / Team / Squad (build 516586: Dumper-7 confirmed) ---
+    constexpr uintptr_t PS_FactionComponent = 0x5A0; // WDFactionComponent* (Dumper-7: AWDPlayerStateSession+0x5A0)
     constexpr uintptr_t Faction_Tag         = 0x100; // FGameplayTag (initial/design-time, unchanged)
     constexpr uintptr_t Faction_TagRep      = 0x110; // FGameplayTag (replicated runtime) [verified 99/99]
     constexpr uintptr_t Faction_Object      = 0x128; // AWDFaction* [verified 77/77]
-    constexpr uintptr_t PS_SquadComponent   = 0x550; // WDSquadComponent* [verified 99/99]
-    constexpr uintptr_t PS_VitalityStateTag = 0x61C; // FGameplayTag — alive/downed/dead [verified 98/98]
-    constexpr uintptr_t PS_VitalityStateTag2 = 0x628; // FGameplayTag — OnDeathChangeFactionTag (estimate -0x58)
-    constexpr uintptr_t PS_MatchStats       = 0x580; // TArray<FWDMatchStat> — K/D/etc (estimate -0x58)
+    constexpr uintptr_t PS_SquadComponent   = 0x5A8; // WDSquadComponent* (Dumper-7: AWDPlayerStateSession+0x5A8)
+    constexpr uintptr_t PS_VitalityStateTag = 0x674; // FGameplayTag — alive/downed/dead (Dumper-7: +0x674)
+    constexpr uintptr_t PS_VitalityStateTag2 = 0x680; // FGameplayTag — OnDeathChangeFactionTag (Dumper-7: +0x680)
+    constexpr uintptr_t PS_MatchStats       = 0x5D8; // TArray<FWDMatchStat> — K/D/etc (Dumper-7: +0x5D8)
 
-    // --- AWDFaction (faction actor data, build 516586) ---
-    constexpr uintptr_t Faction_Score       = 0x2B0; // int32 — faction score (estimate -0x08)
-    constexpr uintptr_t Faction_PlayerCount = 0x2B4; // int32 (estimate -0x08)
-    constexpr uintptr_t Faction_Data        = 0x2C8; // UWDFactionData* [verified 3/3]
+    // --- AWDFaction (faction actor data, build 516586: Dumper-7 confirmed) ---
+    constexpr uintptr_t Faction_Score       = 0x2B8; // int32 — faction score (Dumper-7: AWDFaction+0x2B8)
+    constexpr uintptr_t Faction_PlayerCount = 0x2BC; // int32 (Dumper-7: AWDFaction+0x2BC)
+    constexpr uintptr_t Faction_Data        = 0x2D0; // UWDFactionData* (Dumper-7: AWDFaction+0x2D0)
 
     // --- UWDFactionData (data asset — singleton per faction) ---
     constexpr uintptr_t FactionData_Tag     = 0x30;  // FGameplayTag
@@ -248,11 +248,11 @@ namespace O {
     constexpr uintptr_t Skinned_RenderStateBits = 0x818; // bRecentlyRendered flag byte
     constexpr uintptr_t Skinned_AnimScriptInst = 0x958; // UAnimInstance*
 
-    // --- AWDMoverCharacter extended (build 516586, -0x10 shift) ---
-    constexpr uintptr_t WDChar_GameplayEffectComp = 0x730; // UBHGameplayEffectComponent* (estimate -0x10)
-    constexpr uintptr_t WDChar_WeaponBehavior  = 0x770; // UWDWeaponBehaviorComponent* [verified 7/7]
-    constexpr uintptr_t WDChar_Invincible      = 0x7F3; // bool (bInvincible) (estimate -0x10)
-    constexpr uintptr_t WDChar_DeathState      = 0x7F4; // FWDCharacterVitalityState (0x28 bytes) [verified 7/7]
+    // --- AWDMoverCharacter extended (build 516586, Dumper-7 confirmed) ---
+    constexpr uintptr_t WDChar_GameplayEffectComp = 0x740; // UBHGameplayEffectComponent* (Dumper-7: +0x740)
+    constexpr uintptr_t WDChar_WeaponBehavior  = 0x780; // UWDWeaponBehaviorComponent* (Dumper-7: +0x780)
+    constexpr uintptr_t WDChar_Invincible      = 0x803; // bool (bInvincible) (Dumper-7: +0x803)
+    constexpr uintptr_t WDChar_DeathState      = 0x804; // FWDCharacterVitalityState (0x28 bytes) (Dumper-7: +0x804)
     // FWDCharacterVitalityState layout (0x28, SDK):
     //   +0x00 = InstigatingPlayerController (TWeakObjectPtr, 8)
     //   +0x08 = VitalityTag (FGameplayTag, 8)
@@ -266,14 +266,14 @@ namespace O {
     constexpr uintptr_t DeathState_BleedoutState = 0x1C;
     constexpr uintptr_t DeathState_GiveUpTime    = 0x20; // Season 2: CurrentGiveUpTime moved
     constexpr uintptr_t DeathState_FallToCrit    = 0x14; // Season 2: FallToCriticalAlpha
-    constexpr uintptr_t WDChar_AimingAlpha     = 0x81D; // char — OnRep_AimingAlpha (estimate -0x10)
+    constexpr uintptr_t WDChar_AimingAlpha     = 0x82D; // char — OnRep_AimingAlpha (Dumper-7: +0x82D)
 
     // --- UAnimInstance (aim rotation from AnimScriptInstance) ---
     constexpr uintptr_t AnimInst_AimRotation   = 0x6A0; // FRotator — CommonAimingData+AimRotation
     constexpr uintptr_t AnimInst_SwayEnabled   = 0xFC0; // bool — bWeaponSwayEnabled
 
     // --- Weapon / Recoil (UC page 22, confirmed chain) ---
-    // No recoil: pawn → 0x770 (WeaponBehavior) → 0x440 (StatsData) → 0xBB0 (ViewKickMagnitudeMultiplier)
+    // No recoil: pawn → 0x780 (WeaponBehavior) → 0x440 (StatsData) → 0xBB0 (ViewKickMagnitudeMultiplier)
     constexpr uintptr_t WeaponBehavior_StatsData  = 0x440; // UWDWeaponStatsData*
     constexpr uintptr_t WeaponStats_ViewKick      = 0xBB0; // float — write 0.0f for no recoil
     constexpr uintptr_t WeaponBehavior_bAiming     = 0x3E0; // bool — is currently ADS
@@ -302,13 +302,13 @@ namespace O {
     constexpr uintptr_t WeaponStats_InitialBulletSpeed = 0xDD8; // float — InitialBulletSpeed
     constexpr uintptr_t WeaponStats_IronSightsAimTime = 0x18C; // float — IronSightsAimTime
 
-    // --- Admin / Spectator Detection (build 516586, estimate -0x58 shift) ---
-    constexpr uintptr_t PS_IsDeveloper = 0x619; // bool (estimate -0x58)
-    constexpr uintptr_t PS_IsAdmin     = 0x61A; // bool (estimate -0x58)
+    // --- Admin / Spectator Detection (build 516586, Dumper-7 +0x58 shift) ---
+    constexpr uintptr_t PS_IsDeveloper = 0x671; // bool (Dumper-7 pattern: +0x58 from AWDPlayerStateSession)
+    constexpr uintptr_t PS_IsAdmin     = 0x672; // bool (Dumper-7 pattern: +0x58 from AWDPlayerStateSession)
     constexpr uintptr_t PC_SpectatorPawn = 0x6C8; // ASpectatorPawn* on PlayerController
 
-    // --- Vehicle Damage Model (build 516586, estimate -0x48) ---
-    constexpr uintptr_t Vehicle_DamageModel = 0x750; // UBHVehicleDamageModelComponent* (estimate -0x48)
+    // --- Vehicle Damage Model (build 516586, Dumper-7 confirmed) ---
+    constexpr uintptr_t Vehicle_DamageModel = 0x798; // UBHVehicleDamageModelComponent* (Dumper-7: +0x798)
 
     // --- USceneComponent attachment ---
     constexpr uintptr_t Scene_AttachParent = 0xF0; // USceneComponent* — parent component if attached (SDK 0xF0)
@@ -342,38 +342,38 @@ namespace O {
     constexpr uintptr_t ProjData_CaliberTag        = 0x30;
     constexpr uintptr_t ProjData_TypicalSpeed      = 0x234; // 0x38 + 0x1FC
 
-    // --- Vehicle (build 516586, ~-0x48 shift for most fields) ---
-    constexpr uintptr_t Vehicle_VehicleVariant = 0x360; // UModularVehicleVariant* (estimate -0x48)
-    constexpr uintptr_t Vehicle_SeatComponent  = 0x710; // UBHVehicleSeatComponent* (estimate -0x48)
-    constexpr uintptr_t Vehicle_Mesh           = 0x718; // USkeletalMeshComponentVehicle* (estimate -0x48)
-    constexpr uintptr_t Vehicle_Config         = 0xA28; // UBHBaseVehicleConfigDataAsset* (SDK, untested)
+    // --- Vehicle (build 516586, Dumper-7 confirmed) ---
+    constexpr uintptr_t Vehicle_VehicleVariant = 0x360; // UModularVehicleVariant* (unchanged)
+    constexpr uintptr_t Vehicle_SeatComponent  = 0x758; // UBHVehicleSeatComponent* (Dumper-7: +0x758)
+    constexpr uintptr_t Vehicle_Mesh           = 0x760; // USkeletalMeshComponentVehicle* (Dumper-7: +0x760)
+    constexpr uintptr_t Vehicle_Config         = 0xA78; // UBHBaseVehicleConfigDataAsset* (Dumper-7: +0xA78)
     constexpr uintptr_t VehicleVariant_Id      = 0x34;  // FGameplayTag [untested, unchanged]
     constexpr uintptr_t SeatComp_Occupants     = 0x108; // TArray<UBHVehicleOperatorComponent*> (unchanged)
     constexpr uintptr_t SeatComp_Occupants2    = 0x118; // TArray<UBHVehicleOperatorComponent*> (unchanged)
     constexpr uintptr_t VehicleOp_CurrentSeat  = 0x188; // FMOperatorSeatInfo [verified 6/6]
     constexpr uintptr_t VehicleOp_ReplicatedState = 0x198; // FMOperatorReplicatedState [verified 7/7]
-    constexpr uintptr_t Vehicle_EngineRunning  = 0x841; // bIsEngineRunning (SDK, untested)
-    constexpr uintptr_t Vehicle_HornActive     = 0x8D0; // bIsHornActive (estimate -0x48)
-    constexpr uintptr_t Vehicle_Destroyed      = 0x830; // bIsVehicleDestroyed (SDK, untested)
-    constexpr uintptr_t VehicleFaction_Stationary = 0x0AD0; // WeaponManager (SDK, untested)
-    constexpr uintptr_t VehicleFaction_Airplane   = 0x0BB0; // WeaponManager (SDK, untested)
-    constexpr uintptr_t VehicleFaction_Rotary     = 0x0B90; // WeaponManager (SDK, untested)
-    constexpr uintptr_t VehicleFaction_Tracked    = 0x0BF0; // WeaponManager (SDK, untested)
-    constexpr uintptr_t VehicleFaction_Wheeled    = 0x0BE0; // WeaponManager (SDK, untested)
+    constexpr uintptr_t Vehicle_EngineRunning  = 0x889; // bIsEngineRunning (Dumper-7: +0x889)
+    constexpr uintptr_t Vehicle_HornActive     = 0x918; // bIsHornActive (Dumper-7: +0x918)
+    constexpr uintptr_t Vehicle_Destroyed      = 0x878; // bIsVehicleDestroyed (Dumper-7: +0x878)
+    constexpr uintptr_t VehicleFaction_Stationary = 0x0B20; // WeaponManager (Dumper-7: +0xB20)
+    constexpr uintptr_t VehicleFaction_Airplane   = 0x0C00; // WeaponManager (Dumper-7: +0xC00)
+    constexpr uintptr_t VehicleFaction_Rotary     = 0x0BE0; // WeaponManager (Dumper-7: +0xBE0)
+    constexpr uintptr_t VehicleFaction_Tracked    = 0x0C40; // WeaponManager (Dumper-7: +0xC40)
+    constexpr uintptr_t VehicleFaction_Wheeled    = 0x0C30; // WeaponManager (Dumper-7: +0xC30)
 
     // --- View direction (AController — SDK confirmed at 0x330) ---
     constexpr uintptr_t Controller_ControlRotation = 0x330; // FRotator (3 doubles: pitch, yaw, roll)
 
-    // --- Remote player view direction (ABHMoverPawn — build 516586, -0x10 shift) ---
-    constexpr uintptr_t BHPawn_SmoothedRemoteViewPitch = 0x3A8; // float — replicated pitch (estimate -0x10)
-    constexpr uintptr_t BHPawn_RemoteViewYaw           = 0x3D0; // uint16 — compressed replicated yaw (estimate -0x10)
+    // --- Remote player view direction (ABHMoverPawn — build 516586, Dumper-7 confirmed) ---
+    constexpr uintptr_t BHPawn_SmoothedRemoteViewPitch = 0x3B8; // float — replicated pitch (Dumper-7: +0x3B8)
+    constexpr uintptr_t BHPawn_RemoteViewYaw           = 0x3E0; // uint16 — compressed replicated yaw (Dumper-7: +0x3E0)
 
     // --- Player Clan Tag (AWDPlayerState — build 516586, estimate -0x58) ---
     constexpr uintptr_t PS_PlayerClanTag = 0x410; // FString — AWDPlayerState::PlayerClanTag (Dumper-7 confirmed)
 
-    // --- Inventory / Equipment (build 516586) ---
-    constexpr uintptr_t WDChar_InventoryComp = 0x748; // UWDPlayerInventoryComponent* [verified 7/7]
-    constexpr uintptr_t InvComp_HeldItem     = 0x8C8; // ABHItem* — currently held weapon/item [verified 7/7]
+    // --- Inventory / Equipment (build 516586, Dumper-7 confirmed) ---
+    constexpr uintptr_t WDChar_InventoryComp = 0x758; // UWDPlayerInventoryComponent* (Dumper-7: +0x758)
+    constexpr uintptr_t InvComp_HeldItem     = 0x8E0; // ABHItem* — currently held weapon/item (Dumper-7: +0x8E0)
     constexpr uintptr_t InvComp_ActiveItem   = 0xA78; // QuickSlotDefinitions area (Season 2: resolved via GetActiveItem())
     constexpr uintptr_t BHItem_ItemId        = 0x328; // FGameplayTag — weapon/item identifier
     constexpr uintptr_t InvComp_ArmorArray   = 0x830; // TArray<FWDReplicatedArmorDurability>
