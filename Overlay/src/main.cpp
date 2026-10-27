@@ -3439,7 +3439,7 @@ static void UpdatePlayers() {
     static std::unordered_map<uintptr_t, std::chrono::steady_clock::time_point> s_persistentDeath;
     struct DeadCache { PlayerData data; std::chrono::steady_clock::time_point deathTime; };
     static std::unordered_map<uintptr_t, DeadCache> s_deadPlayerCache;
-    struct VisTrack { float prevLrt; std::chrono::steady_clock::time_point lastVisTime; };
+    struct VisTrack { float prevLrt; std::chrono::steady_clock::time_point lastVisTime; int visStreak; int hidStreak; };
     static std::unordered_map<uintptr_t, VisTrack> s_visTrack;
     static uint32_t s_deadTagId = 0;
     static uint32_t s_dbnoTagId = 0;
@@ -3804,8 +3804,12 @@ static void UpdatePlayers() {
                         vt.lastVisTime = tickNow;
                     }
                     float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                    p.visible = (visSince <= 0.15f) || recentlyRendered;
-                    p.aimVisible = recentlyRendered && (visSince <= 0.05f);
+                    if (recentlyRendered) { vt.visStreak = std::min(vt.visStreak + 1, 20); vt.hidStreak = 0; }
+                    else { vt.hidStreak = std::min(vt.hidStreak + 1, 20); vt.visStreak = 0; }
+                    bool lrtActive = (visSince <= 0.25f);
+                    bool bitStable = (vt.visStreak >= 2);
+                    p.visible = lrtActive || bitStable;
+                    p.aimVisible = lrtActive || (bitStable && vt.visStreak >= 3);
                 }
             }
 
@@ -4118,8 +4122,12 @@ static void UpdatePlayers() {
                             vt.lastVisTime = tickNow;
                         }
                         float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                        p.visible = (visSince <= 0.15f) || recentlyRendered;
-                        p.aimVisible = recentlyRendered && (visSince <= 0.05f);
+                        if (recentlyRendered) { vt.visStreak = std::min(vt.visStreak + 1, 20); vt.hidStreak = 0; }
+                        else { vt.hidStreak = std::min(vt.hidStreak + 1, 20); vt.visStreak = 0; }
+                        bool lrtActive = (visSince <= 0.25f);
+                        bool bitStable = (vt.visStreak >= 2);
+                        p.visible = lrtActive || bitStable;
+                        p.aimVisible = lrtActive || (bitStable && vt.visStreak >= 3);
                     }
                 }
 
@@ -4430,8 +4438,12 @@ static void UpdatePlayers() {
                                 vt.lastVisTime = tickNow;
                             }
                             float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                            p.visible = (visSince <= 0.15f) || recentlyRendered;
-                            p.aimVisible = recentlyRendered && (visSince <= 0.05f);
+                            if (recentlyRendered) { vt.visStreak = std::min(vt.visStreak + 1, 20); vt.hidStreak = 0; }
+                            else { vt.hidStreak = std::min(vt.hidStreak + 1, 20); vt.visStreak = 0; }
+                            bool lrtActive = (visSince <= 0.25f);
+                            bool bitStable = (vt.visStreak >= 2);
+                            p.visible = lrtActive || bitStable;
+                            p.aimVisible = lrtActive || (bitStable && vt.visStreak >= 3);
                         }
                     }
 
@@ -4746,8 +4758,12 @@ static void UpdatePlayers() {
                                 vt.lastVisTime = tickNow;
                             }
                             float visSince = std::chrono::duration<float>(tickNow - vt.lastVisTime).count();
-                            p.visible = (visSince <= 0.15f) || recentlyRendered;
-                            p.aimVisible = recentlyRendered && (visSince <= 0.05f);
+                            if (recentlyRendered) { vt.visStreak = std::min(vt.visStreak + 1, 20); vt.hidStreak = 0; }
+                            else { vt.hidStreak = std::min(vt.hidStreak + 1, 20); vt.visStreak = 0; }
+                            bool lrtActive = (visSince <= 0.25f);
+                            bool bitStable = (vt.visStreak >= 2);
+                            p.visible = lrtActive || bitStable;
+                            p.aimVisible = lrtActive || (bitStable && vt.visStreak >= 3);
                         }
                     }
 
